@@ -1,0 +1,251 @@
+project_id = "hdxvaoeyknjzxfcmxati"
+
+[auth]
+  enable_signup = true
+  [auth.email]
+    double_confirm_changes = false
+    enable_confirmations = true
+    enable_signup = true
+    [auth.email.otp]
+      enabled = true
+      expiry_duration = 300
+      length = 6
+  [auth.hook]
+    [auth.hook.send_email]
+      enabled = true
+      secrets = "env(SEND_EMAIL_HOOK_SECRET)"
+      uri = "https://hdxvaoeyknjzxfcmxati.supabase.co/functions/v1/send-auth-email"
+
+[functions]
+  [functions.accept-project-share]
+    verify_jwt = false
+  [functions.accept-workflow-share]
+    verify_jwt = false
+  [functions.activate-free-subscription]
+    verify_jwt = true
+  [functions.adapt-design]
+    verify_jwt = true
+  [functions.add-watermark]
+    verify_jwt = false
+  [functions.ai-chat]
+    verify_jwt = true
+  [functions.ai-training-process]
+    verify_jwt = true
+  [functions.analyze-design-canvas]
+    verify_jwt = true
+  [functions.analyze-image-layers]
+    verify_jwt = true
+  [functions.analyze-mockup]
+    verify_jwt = true
+  [functions.analyze-reference-for-prompt]
+    verify_jwt = true
+  [functions.apply-mockup]
+    verify_jwt = true
+  [functions.auth-email-hook]
+    verify_jwt = false
+  [functions.canvas-ai-chat]
+    verify_jwt = true
+  [functions.clean-foreground]
+    verify_jwt = true
+  [functions.cleanup-orphaned-images]
+    verify_jwt = true
+  [functions.create-brand]
+    verify_jwt = true
+  [functions.create-payment]
+    verify_jwt = true
+  [functions.create-topup-payment]
+    verify_jwt = true
+  [functions.create-workflow-version]
+    verify_jwt = true
+  [functions.creative-intelligence-analyze]
+    verify_jwt = true
+  [functions.creative-orchestrator]
+    verify_jwt = false
+  [functions.creative-intelligence-chat]
+    verify_jwt = false
+  [functions.download-video]
+    verify_jwt = true
+  [functions.edit-area]
+    verify_jwt = true
+  [functions.edit-image]
+    verify_jwt = true
+  [functions.elevenlabs-scribe-token]
+    verify_jwt = true
+  [functions.enhance-prompt]
+    verify_jwt = true
+  [functions.execute-workflow]
+    verify_jwt = true
+  [functions.extract-brand-from-website]
+    verify_jwt = true
+  [functions.extract-text]
+    verify_jwt = true
+  [functions.fork-workflow]
+    verify_jwt = true
+  [functions.gemini-upscale]
+    verify_jwt = false
+  [functions.fetch-google-font]
+    verify_jwt = false
+  [functions.generate-brand-template]
+    verify_jwt = true
+  [functions.generate-color-palette]
+    verify_jwt = true
+  [functions.generate-cosmo-workflow]
+    verify_jwt = true
+  [functions.generate-design]
+    verify_jwt = false
+  [functions.generate-qr]
+    verify_jwt = true
+  [functions.get-brand-for-ai]
+    verify_jwt = true
+  [functions.get-reference-images]
+    verify_jwt = true
+  [functions.get-template-category]
+    verify_jwt = false
+  [functions.identify-pin-object]
+    verify_jwt = true
+  [functions.import-reference-images]
+    verify_jwt = true
+  [functions.inpaint-image]
+    verify_jwt = true
+  [functions.luma-generate]
+    verify_jwt = true
+  [functions.mcp-brand-server]
+    verify_jwt = false
+  [functions.mcp-style-guide]
+    verify_jwt = true
+  [functions.migrate-canvas-images]
+    verify_jwt = true
+  [functions.mochi-generate]
+    verify_jwt = true
+  [functions.prompt-enhancer-agent]
+    verify_jwt = true
+  [functions.prompt-suggest]
+    verify_jwt = true
+  [functions.proxy-image]
+    verify_jwt = false
+  [functions.publish-workflow-template]
+    verify_jwt = true
+  [functions.reference-curator-agent]
+    verify_jwt = true
+  [functions.remix-template]
+    verify_jwt = true
+  [functions.remove-background]
+    verify_jwt = true
+  [functions.replace-text]
+    verify_jwt = true
+  [functions.rumi-proactive-agent]
+    verify_jwt = true
+  [functions.rumi-voice-chat]
+    verify_jwt = false
+  [functions.scrape-pinterest]
+    verify_jwt = true
+  [functions.scrape-pinterest-jina]
+    verify_jwt = true
+  [functions.search-pinterest]
+    verify_jwt = true
+  [functions.send-auth-email]
+    verify_jwt = false
+  [functions.send-custom-otp]
+    verify_jwt = false
+  [functions.send-verification-email]
+    verify_jwt = true
+  [functions.send-welcome-email]
+    verify_jwt = true
+  [functions.share-brand]
+    verify_jwt = true
+  [functions.share-project]
+    verify_jwt = true
+  [functions.share-workflow]
+    verify_jwt = true
+  [functions.sora-generate]
+    verify_jwt = true
+  [functions.support-chat]
+    verify_jwt = true
+  [functions.think-chat]
+    verify_jwt = false
+  [functions.translate-image-text]
+    verify_jwt = true
+  [functions.translate-text]
+    verify_jwt = true
+  [functions.trigger-brand-webhook]
+    verify_jwt = false
+  [functions.upload-brand-asset]
+    verify_jwt = true
+  [functions.upload-email-assets]
+    verify_jwt = true
+  [functions.upload-reference-images]
+    verify_jwt = true
+  [functions.upload-template-images]
+    verify_jwt = true
+  [functions.validate-discount-code]
+    verify_jwt = true
+  [functions.vectorize-image]
+    verify_jwt = true
+  [functions.verify-admin]
+    verify_jwt = true
+  [functions.verify-authorization]
+    verify_jwt = false
+  [functions.verify-brand-share]
+    verify_jwt = false
+  [functions.verify-email-token]
+    verify_jwt = false
+  [functions.verify-invite-code]
+    verify_jwt = false
+  [functions.verify-otp-attempt]
+    verify_jwt = false
+  [functions.verify-payment]
+    verify_jwt = false
+  [functions.web-research]
+    verify_jwt = true
+  [functions.web-search-you]
+    verify_jwt = true
+  [functions.sketch-to-image]
+    verify_jwt = true
+  [functions.email-lookup]
+    verify_jwt = false
+  [functions.presentation-og]
+    verify_jwt = false
+  [functions.think-generate-content]
+    verify_jwt = false
+  [functions.social-publish]
+    verify_jwt = false
+  [functions.social-analytics]
+    verify_jwt = false
+  [functions.social-oauth-initiate]
+    verify_jwt = false
+  [functions.social-oauth-callback]
+    verify_jwt = false
+  [functions.talent-intake]
+    verify_jwt = false
+  [functions.talent-curate-team]
+    verify_jwt = false
+  [functions.talent-recost]
+    verify_jwt = false
+  [functions.talent-draft-contract]
+    verify_jwt = false
+  [functions.talent-compile-brief]
+    verify_jwt = false
+  [functions.talent-apply-promo]
+    verify_jwt = false
+  [functions.talent-lock-escrow]
+    verify_jwt = false
+  [functions.talent-render-contract-pdf]
+    verify_jwt = true
+  [functions.admin-list-freelancers]
+    verify_jwt = true
+  [functions.admin-set-freelancer-status]
+    verify_jwt = true
+  [functions.verify-bank-account]
+    verify_jwt = false
+  [functions.submit-kyc-verification]
+    verify_jwt = false
+  [functions.process-email-queue]
+    verify_jwt = true
+  [functions.send-transactional-email]
+    verify_jwt = true
+  [functions.preview-transactional-email]
+    verify_jwt = false
+  [functions.handle-email-unsubscribe]
+    verify_jwt = false
+  [functions.handle-email-suppression]
+    verify_jwt = false

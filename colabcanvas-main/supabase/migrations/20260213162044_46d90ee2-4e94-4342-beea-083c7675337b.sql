@@ -1,0 +1,1 @@
+ALTER TABLE public.app_tours ADD COLUMN target_page text DEFAULT NULL;
