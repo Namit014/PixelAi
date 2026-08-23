@@ -73,15 +73,15 @@ Deno.serve(async (req) => {
 
     // Generate AI growth suggestions
     let suggestions: string[] = [];
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (LOVABLE_API_KEY && totalPosts > 0) {
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (GEMINI_API_KEY && totalPosts > 0) {
       try {
         const analyticsContext = JSON.stringify({ totalPosts, publishedPosts, totalEngagement, platformStats });
-        const aiRes = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        const aiRes = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+          headers: { 'Authorization': `Bearer ${GEMINI_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
+            model: 'gemini-2.5-flash',
             messages: [
               { role: 'system', content: 'You are a social media growth strategist. Given analytics data, provide 3-5 concise, actionable growth suggestions. Return only a JSON array of strings.' },
               { role: 'user', content: `Here is my social media analytics: ${analyticsContext}. Give me growth suggestions.` },

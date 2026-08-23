@@ -52,11 +52,28 @@ export const CreateBrandDialog = ({
 
     setExtracting(true);
     try {
-      const { data, error } = await supabase.functions.invoke("extract-brand-from-website", {
-        body: { websiteUrl }
-      });
+      const LOCAL_SERVER = import.meta.env.VITE_LOCAL_SERVER_URL || "http://localhost:3001";
+      let data: any = null;
+      try {
+        const response = await fetch(`${LOCAL_SERVER}/functions/v1/extract-brand-from-website`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ websiteUrl })
+        });
+        if (response.ok) {
+          data = await response.json();
+        }
+      } catch (e) {
+        console.warn('Local extract-brand failed, trying fallback:', e);
+      }
 
-      if (error) throw error;
+      if (!data) {
+        const res = await supabase.functions.invoke("extract-brand-from-website", {
+          body: { websiteUrl }
+        });
+        if (res.error) throw res.error;
+        data = res.data;
+      }
 
       if (data?.success && data?.data) {
         setExtractedData(data.data);
@@ -86,23 +103,46 @@ export const CreateBrandDialog = ({
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("create-brand", {
-        body: { 
-          name, 
-          description, 
-          industry,
-          useAI,
-          website_url: websiteUrl || null,
-          extraction_metadata: extractedData ? {
-            extractedAt: new Date().toISOString(),
-            colors: extractedData.colors,
-            typography: extractedData.typography,
-            styleKeywords: extractedData.styleKeywords
-          } : null
-        },
-      });
+      const LOCAL_SERVER = import.meta.env.VITE_LOCAL_SERVER_URL || "http://localhost:3001";
+      let data: any = null;
 
-      if (error) throw error;
+      try {
+        const response = await fetch(`${LOCAL_SERVER}/functions/v1/create-brand`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            description,
+            industry,
+            website_url: websiteUrl || null,
+            userId: user?.id,
+            extraction_metadata: extractedData ? {
+              extractedAt: new Date().toISOString(),
+              colors: extractedData.colors,
+              typography: extractedData.typography,
+              styleKeywords: extractedData.styleKeywords
+            } : null
+          })
+        });
+        if (response.ok) {
+          data = await response.json();
+        }
+      } catch (e) {
+        console.warn('Local create-brand failed, trying fallback:', e);
+      }
+
+      if (!data) {
+        const res = await supabase.functions.invoke("create-brand", {
+          body: {
+            name,
+            description,
+            industry,
+            website_url: websiteUrl || null
+          }
+        });
+        if (res.error) throw res.error;
+        data = res.data;
+      }
 
       toast({
         title: "Brand created",

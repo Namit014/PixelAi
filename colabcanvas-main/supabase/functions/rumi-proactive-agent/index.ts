@@ -141,8 +141,8 @@ async function generateContentConcepts(
   feedback?: string,
   previousPrompt?: string,
 ): Promise<ContentConcept[]> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+  const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+  if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
 
   let userPrompt = `${brandContext}\n\n`;
 
@@ -154,14 +154,14 @@ async function generateContentConcepts(
     userPrompt += `Generate a mix of social media and blog content proposals for this brand. Create 2-3 varied proposals across different platforms.\n`;
   }
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      Authorization: `Bearer ${GEMINI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       messages: [
         { role: 'system', content: CONTENT_SYSTEM_PROMPT },
         { role: 'user', content: userPrompt },
@@ -193,18 +193,18 @@ async function generateContentConcepts(
 }
 
 async function generateImage(imagePrompt: string): Promise<string | null> {
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  if (!LOVABLE_API_KEY) return null;
+  const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+  if (!GEMINI_API_KEY) return null;
 
   try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash-image',
+        model: 'gemini-2.5-flash-image',
         messages: [{ role: 'user', content: imagePrompt }],
         modalities: ['image', 'text'],
         max_tokens: 8192,

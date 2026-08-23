@@ -8,7 +8,8 @@
     "build": "npx vite build",
     "build:dev": "npx vite build --mode development",
     "lint": "eslint .",
-    "preview": "npx vite preview"
+    "preview": "npx vite preview",
+    "start:server": "cd server && npm install && node index.js"
   },
   "dependencies": {
     "@babel/runtime": "^8.0.0",
@@ -67,6 +68,7 @@
     "html-to-image": "^1.11.13",
     "input-otp": "^1.4.2",
     "jspdf": "^4.2.0",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.577.0",
     "mermaid": "^11.12.2",
     "next-themes": "^0.3.0",
@@ -92,6 +94,7 @@
     "usehooks-ts": "^3.1.1",
     "vaul": "^0.9.9",
     "vite-plugin-svgr": "^4.5.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.25.76",
     "zustand": "^4.4.7"
   },

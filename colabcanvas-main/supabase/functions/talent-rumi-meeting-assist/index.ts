@@ -57,8 +57,8 @@ Deno.serve(async (req: Request) => {
       .select("title, brief, team_composition, timeline, pricing")
       .eq("id", meeting.project_id).maybeSingle();
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return json({ error: "LOVABLE_API_KEY not configured" }, 500);
+    const apiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!apiKey) return json({ error: "GEMINI_API_KEY not configured" }, 500);
 
     const projectCtx = `PROJECT: ${project?.title || "Untitled"}
 BRIEF: ${JSON.stringify(project?.brief ?? {}).slice(0, 1500)}
@@ -70,11 +70,11 @@ BUDGET: ${JSON.stringify(project?.pricing ?? {}).slice(0, 400)}`;
       ? `${projectCtx}\n\nLATEST TRANSCRIPT (last ~30s):\n${transcript_chunk || "(no transcript yet)"}\n\nQUESTION FROM PARTICIPANT: ${user_question}\n\nAnswer concisely.`
       : `${projectCtx}\n\nLATEST TRANSCRIPT (last ~30s):\n${transcript_chunk || ""}\n\nReturn a single short note ONLY if you spot a conflict, risk, missing detail, or commitment worth flagging. Otherwise return an empty string.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gemini-2.5-flash",
         messages: [
           { role: "system", content: SYSTEM },
           { role: "user", content: userMsg },

@@ -9,7 +9,7 @@ function getSafeErrorMessage(error: unknown): string {
   return 'An unexpected error occurred';
 }
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -227,8 +227,8 @@ User: "Women 25-35, want them to join the waitlist, luxury vibe"
 13. Always ask about the user's specific market, geography, and business model before making competitive claims.`;
 
 async function chat(messages: ChatMessage[], context?: ChatRequest['context']): Promise<ChatResponse> {
-  if (!LOVABLE_API_KEY) {
-    throw new Error('LOVABLE_API_KEY not configured');
+  if (!GEMINI_API_KEY) {
+    throw new Error('GEMINI_API_KEY not configured');
   }
 
   // Build conversation context
@@ -267,14 +267,14 @@ async function chat(messages: ChatMessage[], context?: ChatRequest['context']): 
     ...messages.map(m => ({ role: m.role, content: m.content })),
   ];
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'Authorization': `Bearer ${GEMINI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
+      model: 'gemini-2.5-flash',
       messages: openaiMessages,
       temperature: 0.7,
       max_tokens: 1024,
@@ -293,8 +293,11 @@ async function chat(messages: ChatMessage[], context?: ChatRequest['context']): 
   const rawContent = data.choices?.[0]?.message?.content || '';
   
   try {
-    // Strip markdown code fences if present
-    const cleaned = rawContent.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+    let cleaned = rawContent.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '').trim();
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleaned = jsonMatch[0];
+    }
     const parsed = JSON.parse(cleaned);
     return {
       type: parsed.type || 'chat',

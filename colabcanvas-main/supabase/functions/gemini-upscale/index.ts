@@ -74,9 +74,9 @@ Deno.serve(async (req) => {
       .eq("user_id", userId);
 
     // 4. Call Lovable AI Gateway for upscaling
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY not configured");
     }
 
     const imageDataUrl = `data:${mimeType};base64,${image}`;
@@ -100,10 +100,10 @@ CRITICAL: The output must look DRAMATICALLY sharper and more detailed than the i
 
     console.log(`Image dimensions: ${width}x${height}, upscaling to 4K with enhanced quality...`);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GEMINI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

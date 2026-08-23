@@ -55,9 +55,9 @@ Deno.serve(async (req) => {
       ? `\n\nIMPORTANT: The output image MUST be exactly ${originalWidth}x${originalHeight} pixels to match the original.`
       : '';
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not configured');
     }
 
     console.log(`🌐 Translating image text to ${targetLanguageName}${isCreative ? ' (Creative/Hinglish mode)' : ''}`);
@@ -88,10 +88,10 @@ OUTPUT: Generate the modified image with translated text.`;
     }
 
     // Use gemini-3-pro-image-preview for reliable image generation
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

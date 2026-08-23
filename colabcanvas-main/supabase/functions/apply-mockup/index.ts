@@ -47,8 +47,8 @@ Deno.serve(async (req: Request) => {
       return json(400, { error: 'Base image, overlay image, and surface data are required' });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) return json(500, { error: 'API key not configured' });
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) return json(500, { error: 'API key not configured' });
 
     // Pre-check credits but DO NOT deduct yet — only deduct after success.
     const CREDIT_COST = 10;
@@ -98,11 +98,11 @@ Return ONLY the composited image.`;
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 60_000);
       try {
-        return await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        return await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
           method: 'POST',
           signal: ctrl.signal,
           headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${GEMINI_API_KEY}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({

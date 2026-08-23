@@ -109,7 +109,8 @@ const App = () => {
                       <Route path="/brands" element={<OnboardingRoute><Brands /></OnboardingRoute>} />
                       <Route path="/cogent" element={<OnboardingRoute><CogentLanding /></OnboardingRoute>} />
                       <Route path="/cogent/chat" element={<OnboardingRoute><Think /></OnboardingRoute>} />
-                      <Route path="/talent" element={<OnboardingRoute><Talent /></OnboardingRoute>} />
+                      <Route path="/truevision" element={<OnboardingRoute><Talent /></OnboardingRoute>} />
+                      <Route path="/truevision/chat" element={<OnboardingRoute><Think /></OnboardingRoute>} />
                       <Route path="/talent/new" element={<OnboardingRoute><TalentRouteGuard requires="client"><TalentIntake /></TalentRouteGuard></OnboardingRoute>} />
                       <Route path="/talent/projects/:id" element={<OnboardingRoute><TalentRouteGuard requires="any"><TalentProject /></TalentRouteGuard></OnboardingRoute>} />
                       <Route path="/talent/projects/:id/confirm" element={<OnboardingRoute><TalentRouteGuard requires="client"><TalentConfirm /></TalentRouteGuard></OnboardingRoute>} />

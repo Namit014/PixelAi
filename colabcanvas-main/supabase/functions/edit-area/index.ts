@@ -16,7 +16,7 @@ Deno.serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+    const lovableApiKey = Deno.env.get("GEMINI_API_KEY");
 
     if (!supabaseUrl || !supabaseServiceKey || !lovableApiKey) {
       console.error('CRITICAL: Missing required environment variables');
@@ -90,7 +90,7 @@ Deno.serve(async (req: Request) => {
 
     // Call Lovable AI with inpainting instructions
     const aiResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
+      "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
       {
         method: "POST",
         headers: {
@@ -98,7 +98,7 @@ Deno.serve(async (req: Request) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-image",
+          model: "gemini-2.5-flash-image",
           messages: [
             {
               role: "user",

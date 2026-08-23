@@ -312,6 +312,154 @@ const Dashboard = () => {
     localStorage.setItem('talentPrompt', prompt.trim());
     navigate('/talent/new', { state: { opening: prompt.trim() } });
   };
+
+  // ─── Clone & Open Project (always make new project) ──────────────────
+  const [isCloning, setIsCloning] = useState(false);
+  const handleCloneAndOpen = async (item: any) => {
+    if (!user) return;
+    setIsCloning(true);
+    const toastId = toast({
+      title: 'Creating Copy...',
+      description: 'Cloning selected item into a new project...',
+    });
+
+    try {
+      if (item.source === 'cosmo') {
+        // Clone Presentation
+        const { data: orig, error: fetchErr } = await supabase
+          .from('presentations')
+          .select('*')
+          .eq('id', item.id)
+          .single();
+        if (fetchErr || !orig) throw fetchErr || new Error('Could not find original presentation');
+
+        const { data: newPres, error: insertErr } = await supabase
+          .from('presentations')
+          .insert({
+            user_id: user.id,
+            title: orig.title ? `${orig.title} (Copy)` : 'Untitled Presentation (Copy)',
+            theme_id: orig.theme_id,
+            design_tokens: orig.design_tokens,
+            slides: orig.slides,
+          })
+          .select()
+          .single();
+        if (insertErr || !newPres) throw insertErr || new Error('Could not create cloned presentation');
+
+        toast({
+          title: 'Success',
+          description: 'Created new presentation copy!',
+        });
+        navigate(`/cosmo/editor?presentationId=${newPres.id}`);
+
+      } else if (item.source === 'covex') {
+        // Clone Workflow
+        const { data: orig, error: fetchErr } = await supabase
+          .from('workflows')
+          .select('*')
+          .eq('id', item.id)
+          .single();
+        if (fetchErr || !orig) throw fetchErr || new Error('Could not find original workflow');
+
+        const { data: newWf, error: insertErr } = await supabase
+          .from('workflows')
+          .insert({
+            user_id: user.id,
+            title: orig.title ? `${orig.title} (Copy)` : 'Untitled Workflow (Copy)',
+            description: orig.description,
+            is_public: orig.is_public,
+            is_template: orig.is_template,
+          })
+          .select()
+          .single();
+        if (insertErr || !newWf) throw insertErr || new Error('Could not create cloned workflow');
+
+        // Copy nodes
+        const { data: nodes } = await supabase.from('workflow_nodes').select('*').eq('workflow_id', item.id);
+        if (nodes && nodes.length > 0) {
+          const clonedNodes = nodes.map(n => {
+            const { id, created_at, updated_at, ...rest } = n;
+            return { ...rest, workflow_id: newWf.id };
+          });
+          await supabase.from('workflow_nodes').insert(clonedNodes);
+        }
+
+        // Copy edges
+        const { data: edges } = await supabase.from('workflow_edges').select('*').eq('workflow_id', item.id);
+        if (edges && edges.length > 0) {
+          const clonedEdges = edges.map(e => {
+            const { id, created_at, ...rest } = e;
+            return { ...rest, workflow_id: newWf.id };
+          });
+          await supabase.from('workflow_edges').insert(clonedEdges);
+        }
+
+        toast({
+          title: 'Success',
+          description: 'Created new workflow copy!',
+        });
+        navigate(`/covex/editor?id=${newWf.id}`);
+
+      } else {
+        // Clone Canvas Project
+        const { data: orig, error: fetchErr } = await supabase
+          .from('projects')
+          .select('*')
+          .eq('id', item.id)
+          .single();
+        if (fetchErr || !orig) throw fetchErr || new Error('Could not find original project');
+
+        const { data: newProj, error: insertErr } = await supabase
+          .from('projects')
+          .insert({
+            user_id: user.id,
+            title: orig.title ? `${orig.title} (Copy)` : 'Untitled Project (Copy)',
+            brand_id: orig.brand_id,
+            canvas_data: orig.canvas_data,
+            last_accessed_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+        if (insertErr || !newProj) throw insertErr || new Error('Could not create cloned project');
+
+        // Copy artboards
+        const { data: artboards } = await supabase.from('artboards').select('*').eq('project_id', item.id);
+        if (artboards && artboards.length > 0) {
+          const clonedArtboards = artboards.map(ab => {
+            const { id, created_at, updated_at, ...rest } = ab;
+            return { ...rest, project_id: newProj.id, user_id: user.id };
+          });
+          await supabase.from('artboards').insert(clonedArtboards);
+        }
+
+        // Copy canvas objects
+        const { data: objects } = await supabase.from('canvas_objects').select('*').eq('project_id', item.id);
+        if (objects && objects.length > 0) {
+          const clonedObjects = objects.map(o => {
+            const { id, created_at, updated_at, ...rest } = o;
+            return { ...rest, project_id: newProj.id, user_id: user.id };
+          });
+          await supabase.from('canvas_objects').insert(clonedObjects);
+        }
+
+        toast({
+          title: 'Success',
+          description: 'Created new project copy!',
+        });
+        navigate(`/canvas?projectId=${newProj.id}`);
+      }
+    } catch (e: any) {
+      console.error(e);
+      toast({
+        title: 'Error',
+        description: e.message || 'Failed to copy item',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCloning(false);
+    }
+  };
+
   const handleFileAttach = () => {
     fileInputRef.current?.click();
   };
@@ -758,12 +906,14 @@ const Dashboard = () => {
                 onClick={() => {
                   if (selectionMode) {
                     toggleProjectSelection(project.id);
-                  } else if (project.source === 'cosmo') {
-                    navigate(`/cosmo/editor?presentationId=${project.id}`);
-                  } else if (project.source === 'covex') {
-                    navigate(`/covex/editor?id=${project.id}`);
                   } else {
-                    navigate(`/canvas?projectId=${project.id}`);
+                    if (project.source === 'cosmo') {
+                      navigate(`/cosmo/editor?presentationId=${project.id}`);
+                    } else if (project.source === 'covex') {
+                      navigate(`/covex/editor?id=${project.id}`);
+                    } else {
+                      navigate(`/canvas?projectId=${project.id}`);
+                    }
                   }
                 }}>
 

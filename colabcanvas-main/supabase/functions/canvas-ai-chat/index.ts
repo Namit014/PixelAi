@@ -86,9 +86,9 @@ Deno.serve(async (req) => {
       resolution
     });
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
@@ -555,10 +555,10 @@ If text appears in the design, render it sharply with correct spelling and stron
         let response: Response | null = null;
         let lastError = '';
         for (let attempt = 1; attempt <= 2; attempt++) {
-          response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
             method: "POST",
             headers: {
-              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              Authorization: `Bearer ${GEMINI_API_KEY}`,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({

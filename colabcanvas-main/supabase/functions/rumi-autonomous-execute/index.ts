@@ -5,7 +5,7 @@ console.log('[rumi-autonomous-execute] v6 deployed — website-only fast path, p
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
 
 const STATES = [
   'QUEUED',
@@ -116,11 +116,11 @@ async function logAgent(jobId: string, agentName: string, status: string, opts: 
 }
 
 async function callAI(systemPrompt: string, userPrompt: string, maxTokens = 2048): Promise<string> {
-  const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const res = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+    headers: { 'Authorization': `Bearer ${GEMINI_API_KEY}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
+      model: 'gemini-2.5-flash',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -202,9 +202,9 @@ async function generateImageDirect(
         await delay(backoff);
       }
 
-      const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      const res = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${GEMINI_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'google/gemini-3-pro-image-preview',
           messages: [{ role: 'user', content: prompt }],

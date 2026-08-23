@@ -65,16 +65,3 @@ USING (
     (is_template = TRUE AND has_role(auth.uid(), 'admin'))
   )
 );
-
--- Phase 3: Grant admin access to cohyve.in@gmail.com
-INSERT INTO user_roles (user_id, role)
-VALUES ('420609a9-d0cf-4ec3-b90c-5ced0247b3aa', 'admin')
-ON CONFLICT (user_id, role) DO NOTHING;
-
--- Phase 4: Set unlimited credits
-UPDATE credits 
-SET 
-  balance = 999999,
-  subscription_tier = 'enterprise',
-  subscription_expires_at = '2099-12-31 23:59:59+00'
-WHERE user_id = '420609a9-d0cf-4ec3-b90c-5ced0247b3aa';

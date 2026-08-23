@@ -164,7 +164,7 @@ export const CosmoLandingView = () => {
           </span>
         </h1>
         <p className="text-zinc-500 mt-3 max-w-md mx-auto text-sm leading-relaxed">
-          Build beautiful presentations with AI — slides, layouts and themes generated from a single prompt.
+          Turn raw product photos into stunning 4K professional images — powered by AI.
         </p>
       </div>
 
@@ -173,9 +173,9 @@ export const CosmoLandingView = () => {
         value={intakeText}
         onChange={setIntakeText}
         onSubmit={() => startNew(intakeText)}
-        placeholder="Describe the presentation you want to build…"
+        placeholder="What kind of product shoot do you want to create?"
         busy={creating}
-        actionLabel="Start Cosmo"
+        actionLabel="Open Studio"
         showModeToggle={false}
         showSendModeDropdown={false}
       />
@@ -220,7 +220,7 @@ export const CosmoLandingView = () => {
         </div>
 
         <Button size="sm" variant="outline" onClick={() => startNew()} className="gap-2 text-xs font-normal">
-          <Plus className="w-3 h-3" /> New Presentation
+          <Plus className="w-3 h-3" /> New Studio Session
         </Button>
       </div>
 
@@ -237,7 +237,35 @@ export const CosmoLandingView = () => {
               key={p.id}
               className="group relative cursor-pointer overflow-hidden border border-zinc-200 bg-white hover-lift transition-all duration-300 animate-in fade-in-0"
               style={{ animationDelay: `${index * 0.05}s` }}
-              onClick={() => navigate(`/cosmo/editor?presentationId=${p.id}`)}
+              onClick={async () => {
+                try {
+                  const { data: orig, error: fetchErr } = await supabase
+                    .from('presentations')
+                    .select('*')
+                    .eq('id', p.id)
+                    .single();
+                  if (fetchErr || !orig) throw fetchErr || new Error('Could not find original presentation');
+
+                  const { data: newPres, error: insertErr } = await supabase
+                    .from('presentations')
+                    .insert({
+                      user_id: user?.id,
+                      title: orig.title ? `${orig.title} (Copy)` : 'Untitled Presentation (Copy)',
+                      theme_id: orig.theme_id,
+                      design_tokens: orig.design_tokens,
+                      slides: orig.slides,
+                    })
+                    .select()
+                    .single();
+                  if (insertErr || !newPres) throw insertErr || new Error('Could not create cloned presentation');
+
+                  toast.success('Cloned into new Studio session!');
+                  navigate(`/cosmo/editor?presentationId=${newPres.id}`);
+                } catch (e: any) {
+                  console.error(e);
+                  toast.error(e.message || 'Failed to copy presentation');
+                }
+              }}
             >
               {/* Delete button (hover) */}
               <button
@@ -264,11 +292,11 @@ export const CosmoLandingView = () => {
               </div>
               <div className="p-3">
                 <h3 className="truncate font-normal text-sm text-foreground">
-                  {p.title || 'Untitled Presentation'}
+                  {p.title || 'Untitled Studio Session'}
                 </h3>
                 <p className="text-muted-foreground mt-1 text-xs font-light flex items-center gap-1">
                   <Clock className="w-3 h-3" />
-                  Last refined on {new Date(p.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  {new Date(p.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </p>
               </div>
             </Card>

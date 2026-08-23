@@ -75,7 +75,7 @@ const WorkflowEditor = () => {
   useEffect(() => {
     if (!workflowId) return;
     loadComments();
-    const channel = supabase.channel('workflow-comments').on('postgres_changes', {
+    const channel = supabase.channel(`workflow-editor-comments-${workflowId}`).on('postgres_changes', {
       event: '*',
       schema: 'public',
       table: 'workflow_comments',

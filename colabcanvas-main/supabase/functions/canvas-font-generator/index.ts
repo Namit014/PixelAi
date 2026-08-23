@@ -228,8 +228,8 @@ async function extractSpec(apiKey: string, description: string, imageDataUrl?: s
   }];
   if (imageDataUrl) userContent.push({ type: "image_url", image_url: { url: imageDataUrl } });
 
-  const model = imageDataUrl ? "google/gemini-2.5-pro" : "google/gemini-3-flash-preview";
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const model = imageDataUrl ? "gemini-2.5-flash" : "gemini-2.5-flash";
+  const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -1249,7 +1249,7 @@ Deno.serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    const lovableKey = Deno.env.get("GEMINI_API_KEY");
     if (!lovableKey) return json({ error: "AI gateway not configured" }, 500);
 
     const userClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authHeader } } });

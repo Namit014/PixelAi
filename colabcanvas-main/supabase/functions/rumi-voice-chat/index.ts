@@ -1,6 +1,6 @@
 import { corsHeaders } from '../_shared/cors.ts';
 
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
 
 const RUMI_CREATIVE_DIRECTOR_PROMPT = `You are RUMI, a world-class Creative Director on a voice call with a client. You're warm, passionate about design, and deeply experienced in brand strategy, visual storytelling, and campaign development.
 
@@ -65,11 +65,11 @@ Deno.serve(async (req) => {
       content: `[SYSTEM: After your conversational response, output a JSON block with key brief notes extracted from the conversation so far. Format: {"response": "your spoken response", "notes": ["note 1", "note 2", ...]}. Return ONLY this JSON.]`,
     });
 
-    const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const res = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
-      headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+      headers: { 'Authorization': `Bearer ${GEMINI_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gemini-2.5-flash',
         messages,
         temperature: 0.8,
         max_tokens: 512,

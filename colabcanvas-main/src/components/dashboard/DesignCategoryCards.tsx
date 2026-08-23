@@ -6,8 +6,8 @@ import illustrationImg from "@/assets/categories/illustration.webp";
 import brandingImg from "@/assets/categories/branding.webp";
 
 const categories = [
-  { id: "poster", name: "Poster", image: posterImg },
-  { id: "character", name: "Character", image: characterImg },
+  { id: "identity", name: "Identity", image: posterImg },
+  { id: "concept", name: "Concept", image: characterImg },
   { id: "mockup", name: "Mockup", image: mockupImg },
   { id: "illustration", name: "Illustration", image: illustrationImg },
   { id: "branding", name: "Branding", image: brandingImg },
@@ -23,7 +23,7 @@ export const DesignCategoryCards = () => {
   return (
     <div className="mt-16 mb-16">
       <h2 className="text-center text-4xl font-normal mb-8 text-foreground">
-        Create{" "}
+        Brand{" "}
         <span 
           className="bg-clip-text text-transparent animate-gradient-shift"
           style={{

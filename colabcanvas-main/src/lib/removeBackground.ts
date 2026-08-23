@@ -261,7 +261,67 @@ export const removeBackgroundWithMask = async (imageElement: HTMLImageElement): 
     const originalHeight = imageElement.naturalHeight;
     
     if (!pipelineInstance) {
-      throw new Error("Local AI models have been removed as per configuration.");
+      console.log('🔄 Calling local AI server for background removal...');
+      const canvas = document.createElement('canvas');
+      canvas.width = originalWidth;
+      canvas.height = originalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx?.drawImage(imageElement, 0, 0);
+      const dataUrl = canvas.toDataURL('image/png');
+
+      const LOCAL_SERVER = import.meta.env.VITE_LOCAL_SERVER_URL || 'http://localhost:3001';
+      const response = await fetch(`${LOCAL_SERVER}/functions/v1/edit-image`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          imageUrl: dataUrl,
+          operation: 'remove_background',
+          originalWidth,
+          originalHeight
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('AI Background removal failed');
+      }
+
+      const resData = await response.json();
+      if (!resData.imageUrl) {
+        throw new Error('No image returned from AI');
+      }
+
+      // Convert result to image blob with alpha transparency for white pixels
+      const resultImg = new Image();
+      resultImg.crossOrigin = 'anonymous';
+      await new Promise((res, rej) => {
+        resultImg.onload = res;
+        resultImg.onerror = rej;
+        resultImg.src = resData.imageUrl;
+      });
+
+      const outCanvas = document.createElement('canvas');
+      outCanvas.width = resultImg.naturalWidth || originalWidth;
+      outCanvas.height = resultImg.naturalHeight || originalHeight;
+      const outCtx = outCanvas.getContext('2d')!;
+      outCtx.drawImage(resultImg, 0, 0);
+
+      const imgData = outCtx.getImageData(0, 0, outCanvas.width, outCanvas.height);
+      const d = imgData.data;
+      // Key out pure white/near white pixels to create true PNG transparency
+      for (let i = 0; i < d.length; i += 4) {
+        const r = d[i], g = d[i+1], b = d[i+2];
+        if (r > 240 && g > 240 && b > 240) {
+          d[i+3] = 0; // alpha = 0
+        }
+      }
+      outCtx.putImageData(imgData, 0, 0);
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        outCanvas.toBlob((b) => b ? resolve(b) : reject(new Error('Blob error')), 'image/png');
+      });
+
+      const dummyMask = new Float32Array(outCanvas.width * outCanvas.height).fill(1);
+      return { blob, mask: dummyMask, width: outCanvas.width, height: outCanvas.height };
     }
     
     const processingCanvas = document.createElement('canvas');

@@ -621,10 +621,10 @@ Deno.serve(async (req) => {
     }
 
     // Always use Lovable AI Gateway - it's pre-configured and has best reliability
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     
-    if (!LOVABLE_API_KEY) {
-      console.error('❌ LOVABLE_API_KEY not configured - this should never happen in Lovable Cloud');
+    if (!GEMINI_API_KEY) {
+      console.error('❌ GEMINI_API_KEY not configured - this should never happen in Lovable Cloud');
       return new Response(
         JSON.stringify({ 
           error: 'CONFIGURATION_ERROR',
@@ -739,9 +739,9 @@ The user's words ALWAYS take priority over any default behavior.`
       console.log('📡 Calling Lovable AI Gateway for image generation');
       usedLovableAI = true;
       
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        throw new Error('LOVABLE_API_KEY not configured - please contact support');
+      const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+      if (!GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY not configured - please contact support');
       }
       
       // Retry logic: Try up to 2 times with 1 second delay between attempts
@@ -755,10 +755,10 @@ The user's words ALWAYS take priority over any default behavior.`
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
           
-          const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+          const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+              'Authorization': `Bearer ${GEMINI_API_KEY}`,
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({

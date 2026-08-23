@@ -790,7 +790,18 @@ export function CreativeIntelligenceMode({ onExportToCanvas, onSwitchToResearch,
                       >
                         {message.role === 'assistant' ? (
                           <div className="prose prose-sm dark:prose-invert max-w-none break-words prose-pre:whitespace-pre-wrap prose-pre:break-words prose-pre:bg-transparent prose-pre:p-0 prose-pre:font-sans prose-pre:text-inherit prose-code:font-sans prose-code:bg-transparent prose-code:px-0 prose-code:text-inherit prose-code:before:content-none prose-code:after:content-none prose-p:my-1.5 prose-li:my-0.5 prose-ul:my-1.5 prose-ol:my-1.5">
-                            <ReactMarkdown>{message.content}</ReactMarkdown>
+                            <ReactMarkdown>{(() => {
+                              try {
+                                const match = message.content.match(/\{[\s\S]*"type"[\s\S]*\}/);
+                                if (match) {
+                                  const parsed = JSON.parse(match[0]);
+                                  if (parsed.type) {
+                                    return message.content.replace(match[0], '').trim() || parsed.content || message.content;
+                                  }
+                                }
+                              } catch (e) {}
+                              return message.content;
+                            })()}</ReactMarkdown>
                           </div>
                         ) : (
                           <p className="text-sm whitespace-pre-wrap">{message.content}</p>

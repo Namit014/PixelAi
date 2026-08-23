@@ -170,16 +170,8 @@ const ModelSelector = ({
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="px-4 py-2 border-t bg-muted/30">
-          <p className="text-[10px] text-muted-foreground text-center">
-            Free tier until Oct 2025
-          </p>
-        </div>
       </PopoverContent>
     </Popover>);
-
 };
 
 export default ModelSelector;

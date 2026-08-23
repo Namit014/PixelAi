@@ -55,9 +55,9 @@ Deno.serve(async (req) => {
     const validated = SupportChatRequestSchema.parse(body);
     const { messages, ticketId } = validated;
     
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY not configured');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY not configured');
       return new Response(
         JSON.stringify({ error: 'Service temporarily unavailable' }), 
         { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -92,14 +92,14 @@ AVAILABLE TOOLS:
 
 Be friendly, professional, and proactive about helping users resolve their issues.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: 'gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           ...messages
@@ -328,14 +328,14 @@ Be friendly, professional, and proactive about helping users resolve their issue
 
       if (hasNonCreateTicketResults) {
         // Make follow-up call with tool results
-        const followUpResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        const followUpResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Authorization': `Bearer ${GEMINI_API_KEY}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
+            model: 'gemini-2.5-flash',
             messages: [
               { role: 'system', content: systemPrompt },
               ...messages,

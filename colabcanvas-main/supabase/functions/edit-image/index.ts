@@ -32,9 +32,9 @@ Deno.serve(async (req) => {
       throw new Error('No authorization header');
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     const { createClient } = await import('npm:@supabase/supabase-js@2');
@@ -124,11 +124,11 @@ CRITICAL COMPOSITION RULES (MUST FOLLOW):
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), HARD_TIMEOUT_MS);
       try {
-        return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        return await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
           method: "POST",
           signal: ctrl.signal,
           headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            Authorization: `Bearer ${GEMINI_API_KEY}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({

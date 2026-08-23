@@ -215,7 +215,55 @@ export const CovexLandingView = () => {
               key={p.id}
               className="group relative cursor-pointer overflow-hidden border border-zinc-200 bg-white hover-lift transition-all duration-300 animate-in fade-in-0"
               style={{ animationDelay: `${index * 0.05}s` }}
-              onClick={() => navigate(`/covex/editor?id=${p.id}`)}
+              onClick={async () => {
+                try {
+                  const { data: orig, error: fetchErr } = await supabase
+                    .from('workflows')
+                    .select('*')
+                    .eq('id', p.id)
+                    .single();
+                  if (fetchErr || !orig) throw fetchErr || new Error('Could not find original workflow');
+
+                  const { data: newWf, error: insertErr } = await supabase
+                    .from('workflows')
+                    .insert({
+                      user_id: user?.id,
+                      title: orig.title ? `${orig.title} (Copy)` : 'Untitled Workflow (Copy)',
+                      description: orig.description,
+                      is_public: orig.is_public,
+                      is_template: orig.is_template,
+                    })
+                    .select()
+                    .single();
+                  if (insertErr || !newWf) throw insertErr || new Error('Could not create cloned workflow');
+
+                  // Copy nodes
+                  const { data: nodes } = await supabase.from('workflow_nodes').select('*').eq('workflow_id', p.id);
+                  if (nodes && nodes.length > 0) {
+                    const clonedNodes = nodes.map(n => {
+                      const { id, created_at, updated_at, ...rest } = n;
+                      return { ...rest, workflow_id: newWf.id };
+                    });
+                    await supabase.from('workflow_nodes').insert(clonedNodes);
+                  }
+
+                  // Copy edges
+                  const { data: edges } = await supabase.from('workflow_edges').select('*').eq('workflow_id', p.id);
+                  if (edges && edges.length > 0) {
+                    const clonedEdges = edges.map(e => {
+                      const { id, created_at, ...rest } = e;
+                      return { ...rest, workflow_id: newWf.id };
+                    });
+                    await supabase.from('workflow_edges').insert(clonedEdges);
+                  }
+
+                  toast.success('Cloned into new Covex session!');
+                  navigate(`/covex/editor?id=${newWf.id}`);
+                } catch (e: any) {
+                  console.error(e);
+                  toast.error(e.message || 'Failed to copy workflow');
+                }
+              }}
             >
               {/* Delete button (hover) */}
               <button

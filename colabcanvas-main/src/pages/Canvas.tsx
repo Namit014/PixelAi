@@ -929,6 +929,18 @@ const Canvas = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
+  // ─── Hot-reload project when projectId in URL changes ──────────────
+  const urlProjectId = searchParams.get('projectId');
+  useEffect(() => {
+    if (user?.id) {
+      console.log('🔄 Project ID changed in URL. Loading project:', urlProjectId);
+      setIsLoading(true);
+      loadOrCreateProject(user.id).finally(() => {
+        setIsLoading(false);
+      });
+    }
+  }, [urlProjectId, user?.id]);
+
   // Load template images if template_category parameter is present
   useEffect(() => {
     const loadTemplateImages = async () => {
@@ -1001,11 +1013,12 @@ const Canvas = () => {
   // This is more predictable and production-grade
   const loadOrCreateProject = async (userId: string) => {
     try {
-      // Check if we need to force create a new project (e.g., from Think mode export)
+      // Check if we need to force create a new project (e.g., from Think mode export or TrueVision landing)
       const forceNewProject = localStorage.getItem('forceNewProject');
-      if (forceNewProject) {
-        localStorage.removeItem('forceNewProject');
-        console.log('📂 Creating new project (forced from Think export)');
+      const isNewProjectQuery = searchParams.get('newProject') === 'true';
+      if (forceNewProject || isNewProjectQuery) {
+        if (forceNewProject) localStorage.removeItem('forceNewProject');
+        console.log('📂 Creating new project (forced from Think/TrueVision)');
         
         const { data: newProject, error: createError } = await supabase
           .from('projects')
@@ -4079,6 +4092,7 @@ const Canvas = () => {
           selectedArtboardImage={selectedArtboardImageUrl} 
           artboards={artboards}
           canvasInstance={canvasInstanceRef.current}
+          selectedFormat={generatorFormat}
         />
 
         {/* Prompt History Bar */}

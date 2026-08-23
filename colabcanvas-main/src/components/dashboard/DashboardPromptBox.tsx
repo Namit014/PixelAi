@@ -11,7 +11,7 @@ import {
   ImageViewDialog } from
 "@/components/ui/ai-prompt-box";
 import GenerateIcon from "@/assets/icons/generate.svg?react";
-import CanvasNavIcon from "@/assets/icons/canvas-nav.svg?react";
+import ColabLogo from "@/assets/colab-logo.svg?react";
 import CosmoNavIcon from "@/assets/icons/cosmo-nav.svg?react";
 import ThinkIcon from "@/assets/icons/think.svg?react";
 import CompanionIcon from "@/assets/icons/companion-nav.svg?react";
@@ -308,7 +308,7 @@ export const DashboardPromptBox: React.FC<DashboardPromptBoxProps> = ({
               activeColor="#F59E0B"
               activeBgColor="rgba(245, 158, 11, 0.1)"
               activeBorderColor="#F59E0B"
-              icon={<CanvasNavIcon className="w-4 h-4" />}
+              icon={<ColabLogo className="w-4 h-4" />}
               label="Canvas"
               onClick={() => setActiveMode("canvas")} />
 

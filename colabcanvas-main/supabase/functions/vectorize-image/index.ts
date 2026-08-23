@@ -93,12 +93,12 @@ async function vectorizeViaAi(imageData: string, apiKey: string): Promise<string
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 60_000);
   try {
-    const r = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const r = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       signal: ctrl.signal,
       headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
+        model: 'gemini-2.5-flash',
         messages: [
           {
             role: 'user',
@@ -182,9 +182,9 @@ Deno.serve(async (req) => {
     }
 
     if (!svg) {
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) return json(503, { error: 'Vectorization service unavailable' });
-      svg = await vectorizeViaAi(imageData, LOVABLE_API_KEY);
+      const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+      if (!GEMINI_API_KEY) return json(503, { error: 'Vectorization service unavailable' });
+      svg = await vectorizeViaAi(imageData, GEMINI_API_KEY);
       engine = 'ai';
     }
 

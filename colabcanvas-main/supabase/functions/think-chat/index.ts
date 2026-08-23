@@ -286,13 +286,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
     }
 
     // Create user client to verify authentication using local JWT validation
@@ -510,7 +510,7 @@ Deno.serve(async (req) => {
             ];
 
             const hasImages = attachments?.some((a: any) => a.type?.startsWith('image/'));
-            const model = hasImages ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview";
+            const model = hasImages ? "gemini-2.5-flash" : "gemini-2.5-flash";
 
             // STEP 4: Generating
             controller.enqueue(encoder.encode(activityEvent({
@@ -528,10 +528,10 @@ Deno.serve(async (req) => {
             }
 
             // Call AI
-            const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+            const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
               method: "POST",
               headers: {
-                Authorization: `Bearer ${LOVABLE_API_KEY}`,
+                Authorization: `Bearer ${GEMINI_API_KEY}`,
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
@@ -666,12 +666,12 @@ Deno.serve(async (req) => {
     ];
 
     const hasImages = attachments?.some((a: any) => a.type?.startsWith('image/'));
-    const model = hasImages ? "google/gemini-2.5-flash" : "google/gemini-3-flash-preview";
+    const model = hasImages ? "gemini-2.5-flash" : "gemini-2.5-flash";
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GEMINI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({

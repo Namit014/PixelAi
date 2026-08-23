@@ -118,9 +118,9 @@ Deno.serve(async (req) => {
     console.log('Credits deducted successfully, proceeding with background removal');
 
     // Use Lovable AI gateway with Gemini for background removal
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      console.error('LOVABLE_API_KEY not configured');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      console.error('GEMINI_API_KEY not configured');
       // Refund credits since service is not configured
       await supabaseClient.rpc('add_credits', {
         _user_id: user.id,
@@ -134,10 +134,10 @@ Deno.serve(async (req) => {
 
     console.log('Starting background removal with Lovable AI gateway...');
     
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

@@ -6,15 +6,10 @@ project_id = "hdxvaoeyknjzxfcmxati"
     double_confirm_changes = false
     enable_confirmations = true
     enable_signup = true
-    [auth.email.otp]
-      enabled = true
-      expiry_duration = 300
-      length = 6
+
   [auth.hook]
     [auth.hook.send_email]
-      enabled = true
-      secrets = "env(SEND_EMAIL_HOOK_SECRET)"
-      uri = "https://hdxvaoeyknjzxfcmxati.supabase.co/functions/v1/send-auth-email"
+      enabled = false
 
 [functions]
   [functions.accept-project-share]
@@ -190,8 +185,6 @@ project_id = "hdxvaoeyknjzxfcmxati"
   [functions.verify-email-token]
     verify_jwt = false
   [functions.verify-invite-code]
-    verify_jwt = false
-  [functions.verify-otp-attempt]
     verify_jwt = false
   [functions.verify-payment]
     verify_jwt = false

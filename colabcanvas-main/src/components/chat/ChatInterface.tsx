@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, ChevronLeft, ChevronRight, X, Check, Plus, Sparkles, Image as ImageIcon, Megaphone, Palette as PaletteIcon, Users } from 'lucide-react';
+import { Eye, ChevronLeft, ChevronRight, X, Check, Plus, Sparkles, Image as ImageIcon, Megaphone, Palette as PaletteIcon, Users, Upload, ImagePlus } from 'lucide-react';
 import { RumiWhiteIcon, ReferenceFoundIcon, GeneratedDesignsIcon, ClickInspirationIcon } from '@/components/icons/CustomIcons';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -133,9 +134,9 @@ const isLogoStrictMatch = (img: any, tokens: string[]): boolean => {
   const desc = String(img?.description || '').toLowerCase();
   const fileName = String(img?.file_name || '').toLowerCase();
 
-  // Hard exclude: poster/layout/print etc
-  const posterish = ['poster', 'flyer', 'print', 'brochure', 'menu', 'packaging', 'layout', 'typography poster', 'campaign'];
-  if (tags.some(t => posterish.includes(t))) return false;
+  // Hard exclude: poster/identity/layout/print etc
+  const nonLogoAssets = ['poster', 'identity', 'flyer', 'print', 'brochure', 'menu', 'packaging', 'layout', 'typography poster', 'campaign'];
+  if (tags.some(t => nonLogoAssets.includes(t))) return false;
 
   // Hard exclude: obvious non-logo reference sets
   if (tags.includes('mockup') && !tags.some(t => ['logo', 'wordmark', 'logomark', 'monogram', 'mark'].includes(t))) {
@@ -167,6 +168,7 @@ interface ChatInterfaceProps {
   selectedArtboardImage?: string | null;
   artboards?: any[];
   canvasInstance?: any | null;
+  selectedFormat?: string;
 }
 const ChatInterface = ({
   userId,
@@ -175,7 +177,8 @@ const ChatInterface = ({
   userName,
   selectedArtboardImage,
   artboards,
-  canvasInstance
+  canvasInstance,
+  selectedFormat
 }: ChatInterfaceProps) => {
   const {
     toast
@@ -453,15 +456,15 @@ const ChatInterface = ({
     });
   }, [userId]); // No conversationId dependency - reads from ref
 
-  const quickActions = ['Create a Logo', 'Create a Poster', 'Create a Campaign', 'Create an Illustration', 'Create a Character'];
+  const quickActions = ['Create a Logo', 'Create an Identity', 'Create a Campaign', 'Create an Illustration', 'Create a Concept'];
 
   // Quick action cards with colored icons for non-designer users
   const quickActionsWithPreviews = [
     { label: 'Create a Logo', icon: Sparkles, color: 'text-amber-500', bgColor: 'bg-amber-50' },
-    { label: 'Create a Poster', icon: ImageIcon, color: 'text-orange-500', bgColor: 'bg-orange-50' },
+    { label: 'Create an Identity', icon: ImageIcon, color: 'text-orange-500', bgColor: 'bg-orange-50' },
     { label: 'Create a Campaign', icon: Megaphone, color: 'text-blue-500', bgColor: 'bg-blue-50' },
     { label: 'Create an Illustration', icon: PaletteIcon, color: 'text-pink-500', bgColor: 'bg-pink-50' },
-    { label: 'Create a Character', icon: Users, color: 'text-green-500', bgColor: 'bg-green-50' },
+    { label: 'Create a Concept', icon: Users, color: 'text-green-500', bgColor: 'bg-green-50' },
   ];
 
   // SMART DYNAMIC QUESTIONING: Generate context-aware questions based on what we know
@@ -500,9 +503,9 @@ const ChatInterface = ({
         }
         break;
 
-      case 'poster':
-        questions.push({ label: 'Main headline or message', placeholder: 'e.g., Summer Music Festival, 50% OFF, Product Launch', value: '' });
-        questions.push({ label: 'Purpose or event', placeholder: 'e.g., concert, sale, awareness campaign, movie promotion', value: '' });
+      case 'identity':
+        questions.push({ label: 'Main headline or message', placeholder: 'e.g., Brand Strategy, 50% OFF, Product Launch', value: '' });
+        questions.push({ label: 'Purpose or event', placeholder: 'e.g., awareness campaign, movie promotion, corporate identity', value: '' });
         if (!knownInfo.audience) {
           questions.push({ label: 'Target audience', placeholder: 'e.g., young adults, families, professionals', value: '' });
         }
@@ -528,8 +531,8 @@ const ChatInterface = ({
         questions.push({ label: 'Purpose', placeholder: 'e.g., book cover, website hero, social media, editorial', value: '' });
         break;
 
-      case 'character':
-        questions.push({ label: 'Character concept', placeholder: 'e.g., friendly robot mascot, adventurous fox, wise owl mentor', value: '' });
+      case 'concept':
+        questions.push({ label: 'Concept idea', placeholder: 'e.g., friendly robot mascot, adventurous fox, wise owl mentor', value: '' });
         questions.push({ label: 'Personality traits', placeholder: 'e.g., brave, playful, wise, mischievous, friendly', value: '' });
         questions.push({ label: 'Art style', placeholder: 'e.g., 2D cartoon, 3D Pixar-style, anime, chibi, realistic', value: '' });
         questions.push({ label: 'Special features', placeholder: 'e.g., wears a cape, has wings, robot parts, magical staff', value: '' });
@@ -863,6 +866,43 @@ const ChatInterface = ({
   // REMOVED: Double-loading useEffect that raced with initConversation
   // History panel switches now call loadConversationMessages directly via onConversationSelect
 
+  // Load saved prompt if passed via routing or landing page
+  useEffect(() => {
+    // 1. Check for text prompt (from Cogent landing)
+    const savedPrompt = localStorage.getItem('thinkPrompt');
+    if (savedPrompt) {
+      localStorage.removeItem('thinkPrompt');
+      handleSend(savedPrompt);
+    }
+    
+    // 2. Check for uploaded image (from TrueVision landing)
+    const trueVisionImage = localStorage.getItem('trueVisionImage');
+    if (trueVisionImage) {
+      localStorage.removeItem('trueVisionImage');
+      
+      const trueVisionMode = localStorage.getItem('trueVisionMode') || 'critique';
+      const trueVisionSpec = localStorage.getItem('trueVisionSpec');
+      
+      localStorage.removeItem('trueVisionMode');
+      localStorage.removeItem('trueVisionSpec');
+
+      // Convert base64 to File object to reuse handleSend seamlessly
+      fetch(trueVisionImage)
+        .then(res => res.blob())
+        .then(blob => {
+          const file = new File([blob], "truevision_upload.png", { type: blob.type || "image/png" });
+          
+          let initialMessage = "Please analyze this design and tell me if it's correct or what needs enhancement.";
+          if (trueVisionMode === 'comparison' && trueVisionSpec) {
+            initialMessage = `Please compare this design against the following specifications from my Excel sheet:\n\n${trueVisionSpec}\n\nList all mismatches, incorrect details, or deviations. Be specific about what is wrong and explain how to fix it.`;
+          }
+          
+          handleSend(initialMessage, [file]);
+        })
+        .catch(err => console.error("Error processing TrueVision image:", err));
+    }
+  }, []);
+
   // Check for initial prompt from Dashboard
   useEffect(() => {
     const initialPrompt = localStorage.getItem('initialPrompt');
@@ -1157,6 +1197,21 @@ const ChatInterface = ({
         }
         uploadedImageUrl = urlData.signedUrl;
         console.log('✅ File uploaded with signed URL');
+        
+        // Auto-add to canvas if it's a TrueVision flow
+        const isTrueVisionInitialMessage = messageText === "Please analyze this design and tell me if it's correct or what needs enhancement." || 
+                                           messageText.includes("Please compare this design against the following specifications");
+                                           
+        if (canvasInstance && isTrueVisionInitialMessage) {
+          // Import fabric dynamically just in case, or use existing methods
+          // ChatInterface receives onDesignGenerated which handles putting things on canvas!
+          try {
+             // We can just call onDesignGenerated as if it was a generated design to put it on canvas
+             onDesignGenerated(uploadedImageUrl, "Uploaded Image", 0, 0, crypto.randomUUID(), false, true, 0, filePath);
+          } catch (e) {
+             console.error("Failed to add uploaded image to canvas", e);
+          }
+        }
       } else {
         console.error('Upload failed:', uploadError);
         toast({
@@ -1535,7 +1590,8 @@ const ChatInterface = ({
         }];
       });
       console.log('🔄 Calling AI chat endpoint...');
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`, {
+      const apiBase = import.meta.env.VITE_LOCAL_SERVER_URL || import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${apiBase}/functions/v1/ai-chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1547,6 +1603,7 @@ const ChatInterface = ({
           projectId,
           model: thinkModeEnabled ? 'google/gemini-3-pro-image-preview' : selectedModel,
           thinkMode: thinkModeEnabled,
+          aspectRatio: selectedFormat || '1:1',
           context: {
             ...contextForAI,
             // ALWAYS include full conversation context
@@ -1630,28 +1687,54 @@ const ChatInterface = ({
         // FIX 5: Clear ALL thinking messages to prevent duplicates
         setMessages(prev => prev.filter(m => !m.isThinking));
 
+        // ── IMAGE GENERATED: Place on canvas ──────────────────────────────────
+        if (data.designGenerated && data.imageUrl) {
+          console.log('🖼️ Design generated! Placing image on canvas...', data.imageUrl.substring(0, 60));
+          try {
+            await onDesignGenerated(data.imageUrl, 'AI Generated Design', 0, 0, crypto.randomUUID(), false, true, 0);
+            console.log('✅ Image placed on canvas successfully');
+          } catch (e) {
+            console.error('❌ Failed to place image on canvas:', e);
+          }
+        }
+
+        // CRITICAL FIX: Extract plain text from JSON wrapper
+        let messageContent = data.message;
+        if (typeof data.message === 'string') {
+          try {
+            const trimmed = data.message.trim();
+            if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+              const parsed = JSON.parse(trimmed);
+              if (parsed && typeof parsed === 'object') {
+                // Extract from any common text field
+                const textField = parsed.content || parsed.message || parsed.text ||
+                  parsed.analysis || parsed.response || parsed.output || parsed.reply || parsed.result;
+                if (textField && typeof textField === 'string') {
+                  messageContent = textField.trim();
+                } else {
+                  // Fallback: strip type/action/briefData keys, use first long string value
+                  const { type, action: _a, briefData, ...rest } = parsed;
+                  const mainVal = Object.values(rest).find((v: any) => typeof v === 'string' && v.length > 20) as string | undefined;
+                  if (mainVal) messageContent = mainVal.trim();
+                }
+              }
+            } else {
+              // Strip orphaned JSON block appended after the text
+              const jsonStart = trimmed.search(/\n?\s*\{[\s\S]*"type"[\s\S]*\}[\s]*$/);
+              if (jsonStart > 0) messageContent = trimmed.slice(0, jsonStart).trim();
+            }
+          } catch {
+            // Not JSON — use as-is
+          }
+        }
+
         // Save natural conversation to database
-        if (conversationIdRef.current && !wasRecentlySaved(data.message, 'assistant')) {
+        if (conversationIdRef.current && !wasRecentlySaved(messageContent, 'assistant')) {
           console.log('💾 Saving natural conversation to database:', {
-            contentPreview: data.message.substring(0, 50),
+            contentPreview: messageContent.substring(0, 50),
             hasOptions: !!data.options,
             conversationId
           });
-
-          // CRITICAL FIX: Extract plain text from JSON wrapper before saving
-          let messageContent = data.message;
-          if (typeof data.message === 'string') {
-            try {
-              const parsed = JSON.parse(data.message);
-              // If it's a JSON object with message key, extract the message
-              if (parsed && typeof parsed === 'object' && parsed.message) {
-                messageContent = parsed.message;
-                console.log('📝 Extracted message text from JSON wrapper');
-              }
-            } catch {
-              // Not JSON, use as-is
-            }
-          }
 
           // Save assistant message to database
           if (conversationIdRef.current) {
@@ -1678,7 +1761,7 @@ const ChatInterface = ({
           const filtered = prev.filter(m => !m.isThinking);
           return [...filtered, {
             role: 'assistant',
-            content: data.message,
+            content: messageContent,
             options: data.options,
             // Include web research sources if available
             researchSources: webResearchData?.results?.map((r: any) => ({
@@ -1738,7 +1821,7 @@ const ChatInterface = ({
           // No design context at all - show design type picker
           clearTimeout(thinkingTimeout);
           const pickerMsg = data.message || "What type of design would you like to create?";
-          const pickerOptions = ["Logo Design", "Social Media Post", "Amazon Listing", "Poster", "Campaign", "Illustration"];
+          const pickerOptions = ["Logo Design", "Social Media Post", "Amazon Listing", "Identity", "Campaign", "Concept", "Illustration"];
           setMessages(prev => [...prev.filter(m => !m.isThinking), {
             role: 'assistant',
             content: pickerMsg,
@@ -1921,18 +2004,18 @@ const ChatInterface = ({
         
         // Smart iteration count based on design type
         const iterationCountMap: Record<string, number> = {
-          'ecommerce': 7,
-          'logo': 5,
-          'branding': 5,
-          'social_media': 5,
-          'campaign': 4,
-          'poster': 4,
-          'illustration': 4,
-          'character': 4,
-          'app_poster': 4,
-          'brand_guidelines': 16,
+          'ecommerce': 1,
+          'logo': 1,
+          'branding': 1,
+          'social_media': 1,
+          'campaign': 1,
+          'poster': 1,
+          'illustration': 1,
+          'character': 1,
+          'app_poster': 1,
+          'brand_guidelines': 1,
         };
-        const iterationCount = iterationCountMap[data.design_type] || 5;
+        const iterationCount = iterationCountMap[data.design_type] || 1;
 
         // Build rich prompt from extracted context
         const featuresStr = features.length > 0 ? `. Key features: ${features.join(', ')}` : '';
@@ -2134,24 +2217,28 @@ const ChatInterface = ({
         let parsedOptions: string[] | undefined = messageOptions;
         let parsedInputFields: any[] | undefined = messageInputFields;
 
-        if (assistantMessage.trim().startsWith('{')) {
+        if (assistantMessage.trim().startsWith('{') || assistantMessage.trim().startsWith('[')) {
           try {
             const parsed = JSON.parse(assistantMessage);
             if (typeof parsed === 'object') {
-              // Extract the actual message content
-              if (parsed.message && typeof parsed.message === 'string') {
-                displayMessage = parsed.message;
-                console.log('📦 Extracted message from JSON:', displayMessage.substring(0, 50));
-              } else if (parsed.action && !parsed.message) {
-                // Action-only JSON with no message - block from display
+              // Extract text from any common field name
+              const textField = (parsed as any).content || (parsed as any).message || (parsed as any).text ||
+                (parsed as any).analysis || (parsed as any).response || (parsed as any).output ||
+                (parsed as any).reply || (parsed as any).result;
+
+              if (textField && typeof textField === 'string') {
+                displayMessage = textField.trim();
+              } else if ((parsed as any).action && !textField) {
+                // Action-only JSON with no message — block from display
                 console.log('⏭️ Blocking action-only JSON from UI');
                 clearTimeout(thinkingTimeout);
                 setIsLoading(false);
                 return;
-              } else if (!parsed.message) {
-                // JSON with no message field at all - provide fallback
-                displayMessage = "I'm working on your design request. Let me help you with that!";
-                console.log('📦 No message in JSON, using fallback');
+              } else if (!textField) {
+                // JSON with no text field — use fallback
+                const { type, action: _a, briefData, ...rest } = parsed as any;
+                const mainVal = Object.values(rest).find((v: any) => typeof v === 'string' && v.length > 20) as string | undefined;
+                displayMessage = mainVal?.trim() || "I'm working on your design request. Let me help you with that!";
               }
               // Extract options if present
               if (parsed.options && Array.isArray(parsed.options)) {
@@ -2286,10 +2373,10 @@ const ChatInterface = ({
       title = 'Logo Design';
     } else if (designType?.toLowerCase().includes('branding')) {
       title = 'Branding Project';
-    } else if (designType?.toLowerCase().includes('poster')) {
-      title = 'Poster Design';
-    } else if (designType?.toLowerCase().includes('character')) {
-      title = 'Character Design';
+    } else if (designType?.toLowerCase().includes('identity')) {
+      title = 'Identity Design';
+    } else if (designType?.toLowerCase().includes('concept')) {
+      title = 'Concept Design';
     } else if (designType?.toLowerCase().includes('illustration')) {
       title = 'Illustration';
     }
@@ -2385,29 +2472,43 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
         if (!session) {
           throw new Error('Session expired. Please log in again.');
         }
-        const {
-          data,
-          error
-        } = await supabase.functions.invoke('generate-design', {
-          body: {
+        const apiBase = import.meta.env.VITE_LOCAL_SERVER_URL || import.meta.env.VITE_SUPABASE_URL;
+        
+        const response = await fetch(`${apiBase}/functions/v1/generate-design`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
             prompt: finalPrompt,
             design_type: brandSystemData?.designType || conversationContext?.designType || 'design',
             model: selectedImageModel,
-            // PHASE 4 FIX: Always pass reference when provided (not ecommerce-only)
             referenceImageUrl: referenceImageUrl || null,
             brandSystem: activeBrandSystem
-          },
-          headers: {
-            Authorization: `Bearer ${session.access_token}`
-          }
+          })
         });
+
+        const rawData = await response.text();
+        let data;
+        let error = null;
+        try {
+          data = JSON.parse(rawData);
+          if (!response.ok) {
+            error = data.error || data.details || 'Unknown error';
+          }
+        } catch (e) {
+          error = rawData || 'Failed to parse response';
+          data = null;
+        }
+
         console.log('🎨 generate-design response:', {
           data,
           error
         });
         if (error) {
           console.error('❌ Generate design error:', error);
-          throw error;
+          throw new Error(error);
         }
         if (data?.error) {
           console.error('Backend error:', data.error, 'Details:', data.details);
@@ -2898,36 +2999,18 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
         if (isLogoDesign) {
           variationModifiers = [
             'VARIATION 1: Primary logo concept — clean, professional wordmark or lettermark. Use the brand colors from the design brief.',
-            'VARIATION 2: Same brand name as readable text, geometric sans-serif wordmark style. Use the brand colors from the design brief.',
-            'VARIATION 3: Same brand name as readable text, humanist sans-serif with organic curves. Use the brand colors from the design brief.',
-            'VARIATION 4: Same brand name as readable text, bold industrial monogram style. Use the brand colors from the design brief.',
-            'VARIATION 5: Same brand name as readable text, minimalist abstract symbol + type. Use the brand colors from the design brief.',
           ];
         } else if (isEcommerce) {
           variationModifiers = [
             'IMAGE 1: HERO SHOT - Clean product photography on white background. The definitive product image.',
-            'IMAGE 2: INFOGRAPHIC LAYOUT - Same EXACT product, white background. Add 3-4 feature callout icons with brief text highlighting key benefits. Clean grid layout. Do NOT change the product.',
-            'IMAGE 3: LIFESTYLE SHOT - Same EXACT product in elegant real-world usage context. Natural lighting, premium setting that matches the product category. Do NOT change the product.',
-            'IMAGE 4: FEATURE DETAIL - Same EXACT product, close-up highlighting key feature or texture. Clean background with a single feature callout. Do NOT change the product.',
-            'IMAGE 5: SIZE & SCALE - Same EXACT product shown with size reference or dimensional info. Clean white background. Do NOT change the product.',
-            'IMAGE 6: BUNDLE/PACKAGE VIEW - Same EXACT product showing what is included in the package. All components laid out cleanly on white. Do NOT change the product.',
-            'IMAGE 7: COMPARISON/BENEFIT - Same EXACT product with before/after or competitive advantage visual. Clean layout with minimal text. Do NOT change the product.',
           ];
         } else if (isSocialMedia) {
           variationModifiers = [
             'VARIATION 1: Primary social media post design — bold, eye-catching layout with strong visual hierarchy. Keep brand name, colors, and style prominent.',
-            'VARIATION 2: Same brand identity, different layout - try vertical stack composition with bold headline at top. Keep brand name, colors, and style identical.',
-            'VARIATION 3: Same brand identity, story format - optimized for Instagram Stories (9:16 feel), engaging vertical layout. Keep brand name, colors, and style identical.',
-            'VARIATION 4: Same brand identity, minimal version - maximum whitespace, single focal point, one line of text. Keep brand name, colors, and style identical.',
-            'VARIATION 5: Same brand identity, carousel-style design with sequential storytelling feel. Keep brand name, colors, and style identical.',
           ];
         } else {
           variationModifiers = [
             'VARIATION 1: Primary design concept — the strongest interpretation of the brief with optimal composition and color balance.',
-            'VARIATION 2: Shift COMPOSITION STRUCTURE - maintain the same subject/product but use different layout grid (asymmetric if reference was symmetric, or vice versa). Same subject, different arrangement.',
-            'VARIATION 3: Transform TEXTURE & MATERIAL - maintain the same subject/product but explore different surfaces (matte vs glossy, rough vs smooth). Same subject, different treatment.',
-            'VARIATION 4: Reimagine LIGHTING DIRECTION - maintain the same subject/product but change light source angle and mood (warm vs cool). Same subject, different environment.',
-            'VARIATION 5: Evolve VISUAL DENSITY - maintain the same subject/product but shift information density (more minimalist vs more layered). Same subject, different creative approach.',
           ];
         }
 
@@ -3156,7 +3239,7 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
 
       // 🔥 FIX: FORCE conversation title update with verification
       if (conversationIdRef.current && iterations.length > 0) {
-        const designTypeLabel = conversationContext?.designType || (basePrompt.toLowerCase().includes('logo') ? 'Logo' : basePrompt.toLowerCase().includes('poster') ? 'Poster' : basePrompt.toLowerCase().includes('character') ? 'Character' : basePrompt.toLowerCase().includes('illustration') ? 'Illustration' : 'Design');
+        const designTypeLabel = conversationContext?.designType || (basePrompt.toLowerCase().includes('logo') ? 'Logo' : basePrompt.toLowerCase().includes('identity') ? 'Identity' : basePrompt.toLowerCase().includes('concept') ? 'Concept' : basePrompt.toLowerCase().includes('illustration') ? 'Illustration' : 'Design');
         const brandName = brandInfoForPrompt?.brandName || conversationContext?.brandInfo?.name || 'Project';
         const newTitle = `${brandName} - ${designTypeLabel}`;
         console.log('💾 FORCING conversation title update:', {
@@ -3437,7 +3520,7 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
 
       // Build rich, detailed prompt
       const basePrompt = [`${designType} design for ${brandName}`, industry && `${industry} industry`, audience && `targeting ${audience}`, styleKeywords, 'professional high-quality modern 2025 design'].filter(Boolean).join(', ');
-      const iterations = 5;
+      const iterations = 1;
       console.log('🎨 Auto-generating with:', {
         basePrompt,
         referenceImageUrl: !!referenceImageUrl
@@ -3532,7 +3615,7 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
         : conversationContext.styleKeywords || '';
       
       let basePrompt = '';
-      let iterationCount = 5;
+      let iterationCount = 1;
       
       switch (designType.toLowerCase()) {
         case 'logo':
@@ -3540,20 +3623,18 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
           break;
         case 'branding':
           basePrompt = `Complete brand identity system for "${brandName}"${brandInfo?.industry ? ` in the ${brandInfo.industry} industry` : ''}. Include logo variations, color palette, and typography.`;
-          iterationCount = 6;
           break;
-        case 'poster':
-          basePrompt = `Creative poster design for "${brandName}"${styleKeywords ? `. Style: ${styleKeywords}` : ''}. Bold typography, striking visuals, professional composition.`;
+        case 'identity':
+          basePrompt = `Creative identity design for "${brandName}"${styleKeywords ? `. Style: ${styleKeywords}` : ''}. Bold typography, striking visuals, professional composition.`;
           break;
-        case 'character':
-          basePrompt = `Original character design for "${brandName}"${styleKeywords ? `. Style: ${styleKeywords}` : ''}. Expressive, memorable, suitable for branding.`;
+        case 'concept':
+          basePrompt = `Original concept design for "${brandName}"${styleKeywords ? `. Style: ${styleKeywords}` : ''}. Expressive, memorable, suitable for branding.`;
           break;
         case 'illustration':
           basePrompt = `Professional illustration for "${brandName}"${styleKeywords ? `. Style: ${styleKeywords}` : ''}. High-quality, detailed artwork.`;
           break;
         case 'campaign':
           basePrompt = `Marketing campaign visuals for "${brandName}"${brandInfo?.industry ? ` in the ${brandInfo.industry} industry` : ''}. Cohesive, impactful, conversion-focused design.`;
-          iterationCount = 4;
           break;
         default:
           basePrompt = `Professional ${designType} design for "${brandName}"${styleKeywords ? `. Style: ${styleKeywords}` : ''}`;
@@ -3675,20 +3756,19 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
       } = conversationContext.autoGeneratePrompt;
       const data = conversationContext;
       let basePrompt = '';
-      let iterationCount = 5;
+      let iterationCount = 1;
       switch (designType) {
         case 'logo':
           basePrompt = `Professional logo design for ${brandName}`;
           break;
         case 'branding':
           basePrompt = requestType === 'brand_guidelines' ? `Complete brand guidelines for ${brandName} with logo, colors, typography` : `Professional logo variations for ${brandName}`;
-          iterationCount = requestType === 'brand_guidelines' ? 8 : 5;
           break;
-        case 'poster':
-          basePrompt = `${brandName} poster design`;
+        case 'identity':
+          basePrompt = `${brandName} identity design`;
           break;
-        case 'character':
-          basePrompt = `${brandName} character design`;
+        case 'concept':
+          basePrompt = `${brandName} concept design`;
           break;
         case 'illustration':
           basePrompt = `${brandName} illustration`;
@@ -3706,59 +3786,61 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
           isThinking: true
         }];
       });
-      try {
-        const iterations = await generateIterations(basePrompt, iterationCount, data.referenceImageUrl, requestType === 'brand_guidelines', {
-          brandName,
-          industry: data.brandInfo?.industry,
-          audience: data.brandInfo?.audience,
-          styleKeywords: data.styleKeywords
-        });
-        const requestedCount = iterationCount;
-        const failedCount = requestedCount - iterations.length;
-        if (iterations.length > 0) {
-          const resultMessage = failedCount > 0 ? `I've created ${iterations.length} out of ${requestedCount} ${data.designType} variations for ${brandName} (${failedCount} failed). Select your favorites to add to canvas!` : `I've created ${iterations.length} ${data.designType} variations for ${brandName}. Select your favorites to add to canvas!`;
+      setTimeout(async () => {
+        try {
+          const iterations = await generateIterations(basePrompt, iterationCount, data.referenceImageUrl, requestType === 'brand_guidelines', {
+            brandName,
+            industry: data.brandInfo?.industry,
+            audience: data.brandInfo?.audience,
+            styleKeywords: data.styleKeywords
+          });
+          const requestedCount = 1;
+          const failedCount = requestedCount - iterations.length;
+          if (iterations.length > 0) {
+            const resultMessage = failedCount > 0 ? `I've created ${iterations.length} out of ${requestedCount} ${data.designType} variations for ${brandName} (${failedCount} failed). Select your favorites to add to canvas!` : `I've created ${iterations.length} ${data.designType} variations for ${brandName}. Select your favorites to add to canvas!`;
+            setMessages(prev => {
+              const filtered = prev.filter(m => !m.isThinking);
+              return [...filtered, {
+                role: 'assistant',
+                content: resultMessage,
+                designIterations: iterations,
+                pendingApproval: true,
+                ...(failedCount > 0 && {
+                  options: ['Retry Failed Variations', 'Continue with These']
+                })
+              }];
+            });
+
+            // CRITICAL: Save iterations to database
+            if (conversationIdRef.current) {
+              console.log('💾 Saving brand design iterations to database:', iterations.length);
+              await supabase.from('messages').insert({
+                conversation_id: conversationIdRef.current,
+                user_id: userId,
+                role: 'assistant',
+                content: resultMessage,
+                metadata: {
+                  design_iterations: iterations,
+                  design_type: data.designType,
+                  brand_name: brandName,
+                  timestamp: new Date().toISOString()
+                }
+              });
+            }
+          } else {
+            throw new Error('All design generations failed. This might be due to rate limits or AI service issues. Please try again in a moment.');
+          }
+        } catch (error) {
+          console.error('❌ Error generating iterations:', error);
           setMessages(prev => {
             const filtered = prev.filter(m => !m.isThinking);
             return [...filtered, {
               role: 'assistant',
-              content: resultMessage,
-              designIterations: iterations,
-              pendingApproval: true,
-              ...(failedCount > 0 && {
-                options: ['Retry Failed Variations', 'Continue with These']
-              })
+              content: 'Sorry, I encountered an error while generating designs. This might be due to rate limits or AI service issues. Please try again in a moment.'
             }];
           });
-
-          // CRITICAL: Save iterations to database
-          if (conversationIdRef.current) {
-            console.log('💾 Saving brand design iterations to database:', iterations.length);
-            await supabase.from('messages').insert({
-              conversation_id: conversationIdRef.current,
-              user_id: userId,
-              role: 'assistant',
-              content: resultMessage,
-              metadata: {
-                design_iterations: iterations,
-                design_type: data.designType,
-                brand_name: brandName,
-                timestamp: new Date().toISOString()
-              }
-            });
-          }
-        } else {
-          throw new Error('All design generations failed. This might be due to rate limits or AI service issues. Please try again in a moment.');
         }
-      } catch (error) {
-        console.error('❌ Error generating iterations:', error);
-        setMessages(prev => {
-          const filtered = prev.filter(m => !m.isThinking);
-          return [...filtered, {
-            role: 'assistant',
-            content: 'Sorry, I encountered an error while generating designs. This might be due to rate limits or AI service issues. Please try again in a moment.'
-          }];
-        });
-      }
+      }, 500);
       return;
     }
 
@@ -3785,10 +3867,10 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
           isThinking: true
         }];
       });
-      const iterations = await generateIterations(designPrompt, 5, conversationContext.referenceImageUrl);
+      const iterations = await generateIterations(designPrompt, 1, conversationContext.referenceImageUrl);
 
       // Calculate failed count
-      const requestedCount = 5;
+      const requestedCount = 1;
       const failedCount = requestedCount - iterations.length;
       if (iterations.length > 0) {
         const resultMessage = failedCount > 0 ? `I've created ${iterations.length} out of ${requestedCount} ${conversationContext.designType} variations for ${brandName} (${failedCount} failed). Select your favorites!` : `I've created ${iterations.length} ${conversationContext.designType} variations for ${brandName}. Select your favorites!`;
@@ -3862,15 +3944,15 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
     }
 
     // Smart questioning flows for all design types
-    if (action === 'Create a Poster') {
+    if (action === 'Create an Identity') {
       setMessages(prev => ([
         ...prev,
         { role: 'user', content: action },
         {
           role: 'assistant',
-          content: 'Let me gather some details to create the perfect poster for you:',
+          content: 'Let me gather some details to create the perfect identity for you:',
           inputFields: [
-            { label: 'Poster title/headline', placeholder: 'e.g., Summer Music Festival 2026', value: '' },
+            { label: 'Identity title/headline', placeholder: 'e.g., Brand Strategy 2026', value: '' },
             { label: 'Event or purpose', placeholder: 'e.g., concert, product launch, awareness campaign', value: '' },
             { label: 'Target audience', placeholder: 'e.g., young adults, professionals, families', value: '' },
             { label: 'Style preferences', placeholder: 'e.g., bold & colorful, minimal, vintage, futuristic', value: '' },
@@ -3878,7 +3960,7 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
           ],
         },
       ]));
-      setConversationContext(prev => ({ ...prev, designType: 'poster', requestType: 'poster' }));
+      setConversationContext(prev => ({ ...prev, designType: 'identity', requestType: 'identity' }));
       return;
     }
 
@@ -3940,23 +4022,23 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
       return;
     }
 
-    if (action === 'Create a Character') {
+    if (action === 'Create a Concept') {
       setMessages(prev => ([
         ...prev,
         { role: 'user', content: action },
         {
           role: 'assistant',
-          content: 'Let me understand your character concept:',
+          content: 'Let me understand your concept:',
           inputFields: [
-            { label: 'Character name', placeholder: 'e.g., Max the Explorer, Luna', value: '' },
-            { label: 'Character type', placeholder: 'e.g., mascot, hero, sidekick, villain, cute creature', value: '' },
+            { label: 'Concept name', placeholder: 'e.g., Max the Explorer, Luna', value: '' },
+            { label: 'Concept type', placeholder: 'e.g., mascot, hero, sidekick, villain, cute creature', value: '' },
             { label: 'Personality traits', placeholder: 'e.g., friendly, brave, mischievous, wise, playful', value: '' },
             { label: 'Art style', placeholder: 'e.g., 2D cartoon, 3D Pixar-style, anime, realistic, chibi', value: '' },
             { label: 'Special features', placeholder: 'e.g., wears a cape, has wings, holds a wand, robot parts', value: '' },
           ],
         },
       ]));
-      setConversationContext(prev => ({ ...prev, designType: 'character', requestType: 'character' }));
+      setConversationContext(prev => ({ ...prev, designType: 'concept', requestType: 'concept' }));
       return;
     }
 
@@ -3977,8 +4059,8 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
     if (lowerAction.includes('browse inspiration') || lowerAction.includes('get inspired') || lowerAction.includes('show inspiration')) {
       setMessages(prev => [...prev, { role: 'user', content: action }, {
         role: 'assistant',
-        content: 'What kind of inspiration are you looking for?',
-        options: ['Logo inspiration', 'Poster inspiration', 'Campaign inspiration', 'Illustration inspiration', 'Social media inspiration']
+        content: "I'm TrueVision, your AI product design checker. You can upload an image of a design or product and I will analyze it for you, give you a professional critique, and help you enhance it!",
+        isWelcome: true
       }]);
       return;
     }
@@ -3987,7 +4069,7 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
     if (lowerAction === 'tell me more' || lowerAction === 'what can you do' || lowerAction === 'help') {
       setMessages(prev => [...prev, { role: 'user', content: action }, {
         role: 'assistant',
-        content: "I'm RUMI, your AI creative director. I can design logos, posters, campaigns, illustrations, characters, social media assets, Amazon listings, app screenshots, and more. Just describe what you need — or pick a design type below!",
+        content: "I'm TrueVision, your AI product design checker. You can upload an image of a design or product and I will analyze it for you, give you a professional critique, and help you enhance it!",
         options: quickActions
       }]);
       return;
@@ -3996,13 +4078,13 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
     // Map partial matches to design types (e.g., "Logo Design" -> "Create a Logo")
     const designTypeMap: Record<string, string> = {
       'logo': 'Create a Logo', 'brand': 'Create a Logo', 'branding': 'Create a Logo',
-      'poster': 'Create a Poster', 'flyer': 'Create a Poster', 'banner': 'Create a Poster',
+      'identity': 'Create an Identity', 'flyer': 'Create an Identity', 'banner': 'Create an Identity',
       'campaign': 'Create a Campaign', 'marketing': 'Create a Campaign', 'ad': 'Create a Campaign',
       'illustration': 'Create an Illustration', 'artwork': 'Create an Illustration',
-      'character': 'Create a Character', 'mascot': 'Create a Character',
+      'concept': 'Create a Concept', 'mascot': 'Create a Concept',
       'social media': 'Create a Campaign', 'instagram': 'Create a Campaign', 'facebook': 'Create a Campaign',
       'amazon': 'Create an Amazon Listing', 'product listing': 'Create an Amazon Listing', 'ecommerce': 'Create an Amazon Listing',
-      'app': 'Create a Poster', 'screenshot': 'Create a Poster',
+      'app': 'Create an Identity', 'screenshot': 'Create an Identity',
     };
     
     for (const [keyword, mappedAction] of Object.entries(designTypeMap)) {
@@ -4078,10 +4160,9 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
                             <ReferenceFoundIcon className="w-6 h-6 flex-shrink-0 mt-0.5" />
                           )}
                           
-                          <p className="text-sm whitespace-pre-wrap leading-relaxed font-normal break-words overflow-wrap-anywhere text-gray-900" style={{
-                            wordBreak: 'break-word',
-                            overflowWrap: 'anywhere'
-                          }}>{message.content.replace(/^✅\s*/, '')}</p>
+                          <div className="text-sm leading-relaxed font-normal text-gray-900 prose prose-sm max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0 prose-headings:my-1 prose-strong:font-semibold">
+                            <ReactMarkdown>{message.content.replace(/^✅\s*/, '')}</ReactMarkdown>
+                          </div>
                         </div>
                         {message.imageAnalysis && (
                           <ProductAnalysisCard 
@@ -4293,9 +4374,31 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
               </div>;
         })}
           
-          {/* Skills Panel - Show in welcome state (no messages) */}
+          {/* TrueVision Empty State - Upload Button */}
           {messages.length === 0 && !isLoading && (
-            <SkillsPanel onSkillSelect={handleSkillSelect} />
+            <div className="flex flex-col items-center justify-center py-20 px-4 text-center h-full">
+              <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-6">
+                <Upload className="w-10 h-10 text-primary" />
+              </div>
+              <h2 className="text-2xl font-semibold mb-2">Welcome to TrueVision</h2>
+              <p className="text-muted-foreground mb-8 max-w-md">Upload an image of your product or design to get an instant professional critique and AI enhancement.</p>
+              
+              <label className="cursor-pointer bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-4 rounded-xl font-medium shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl flex items-center gap-3">
+                <ImagePlus className="w-5 h-5" />
+                Upload Image for TrueVision Check
+                <input 
+                  type="file" 
+                  className="hidden" 
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      handleSend("Please analyze this design and tell me if it's correct or what needs enhancement.", [file]);
+                    }
+                  }}
+                />
+              </label>
+            </div>
           )}
 
           {/* Completed Plan Snapshot - persistent collapsible container after generation */}
@@ -4365,7 +4468,7 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
 
       {/* Video Generation Controls */}
       {selectedModel === 'azure/sora' && <div className="mb-4">
-          <VideoGenerationControls duration={videoDuration} onDurationChange={setVideoDuration} aspectRatio={videoAspectRatio} onAspectRatioChange={setVideoAspectRatio} estimatedCredits={videoDuration * 10} userCredits={userCredits.balance} />
+          <VideoGenerationControls duration={videoDuration} onDurationChange={setVideoDuration} aspectRatio={videoAspectRatio} onAspectRatioChange={setVideoAspectRatio} estimatedCredits={videoDuration * 10} userCredits={videoCredits.balance} />
         </div>}
 
       <ChatInput onSend={handleSend} disabled={isLoading || isGenerating} placeholder={selectedModel === 'azure/sora' ? "Describe the video you want to generate..." : "Describe your idea or ask a question... (@ to tag canvas assets)"} selectedModel={selectedModel} onModelChange={setSelectedModel} selectedImageModel={selectedImageModel} onImageModelChange={setSelectedImageModel} selectedBrandSystem={brandSystem} onBrandSystemChange={setBrandSystem} canvasInstance={canvasInstance} thinkMode={thinkModeEnabled} onThinkModeChange={setThinkModeEnabled} webSearchEnabled={webSearchEnabled} onWebSearchChange={setWebSearchEnabled} selectedSkill={activeSkill} onSkillRemove={handleSkillRemove} onCancel={(isLoading || isGenerating) ? handleCancelGeneration : undefined} />
@@ -4433,7 +4536,7 @@ CRITICAL: Your design MUST reflect the 2025 trends above. Use bold, modern aesth
             
             <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-3 mb-4">
               <p className="text-xs text-yellow-600 dark:text-yellow-400">
-                <strong>Cost:</strong> This will generate 5 variations and deduct 50 credits (10 per image)
+                <strong>Cost:</strong> This will generate 1 variation and deduct 10 credits
               </p>
             </div>
             

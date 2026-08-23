@@ -45,9 +45,9 @@
        });
      }
  
-     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-     if (!LOVABLE_API_KEY) {
-       throw new Error('LOVABLE_API_KEY is not configured');
+     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+     if (!GEMINI_API_KEY) {
+       throw new Error('GEMINI_API_KEY is not configured');
      }
  
      // Type detection only (lightweight call)
@@ -59,14 +59,14 @@
  
  Choose the most specific type that applies. If uncertain, use "general".`;
  
-       const detectResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+       const detectResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
          method: 'POST',
          headers: {
-           'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+           'Authorization': `Bearer ${GEMINI_API_KEY}`,
            'Content-Type': 'application/json',
          },
          body: JSON.stringify({
-           model: 'google/gemini-2.5-flash',
+           model: 'gemini-2.5-flash',
            messages: [
              {
                role: 'user',
@@ -150,14 +150,14 @@
  Provide 3-6 specific improvement suggestions with precise x,y coordinates (0-1 normalized) pointing to the exact area that needs improvement.
  Be specific and actionable in your suggestions.`;
  
-     const analysisResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+     const analysisResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
        method: 'POST',
        headers: {
-         'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+         'Authorization': `Bearer ${GEMINI_API_KEY}`,
          'Content-Type': 'application/json',
        },
        body: JSON.stringify({
-         model: 'google/gemini-2.5-pro',
+         model: 'gemini-2.5-flash',
          messages: [
            {
              role: 'user',

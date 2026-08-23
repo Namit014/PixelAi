@@ -43,11 +43,9 @@ const AiChatRequestSchema = z.object({
   conversationId: z.string().uuid().nullable().optional(),
   projectId: z.string().uuid().optional(),
   model: z.enum([
-    'google/gemini-2.5-flash',
-    'google/gemini-2.5-pro',
-    'google/gemini-2.5-flash-lite',
+    'gemini-2.5-flash',
+    'gemini-2.5-flash-lite',
     'google/gemini-3-pro-preview',
-    'google/gemini-3-flash-preview',
     'google/gemini-3-pro-image-preview',
     'openai/gpt-5',
     'openai/gpt-5-mini',
@@ -241,7 +239,7 @@ Deno.serve(async (req) => {
 
     const CREDIT_COST = 1;
 
-    const selectedModel = model || 'google/gemini-2.5-flash';
+    const selectedModel = model || 'gemini-2.5-flash';
     const startTime = Date.now();
 
     const systemPrompt = buildSystemPrompt(context);
@@ -251,9 +249,9 @@ Deno.serve(async (req) => {
       ...messages
     ];
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     const isNewerModel = selectedModel.includes('gpt-5') || selectedModel.includes('gpt-4.1') || 
@@ -292,10 +290,10 @@ Deno.serve(async (req) => {
     console.log('Calling AI with request:', JSON.stringify(requestBody, null, 2));
 
     const aiStartTime = Date.now();
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(requestBody),
@@ -491,14 +489,14 @@ Deno.serve(async (req) => {
       else if (parsed.action === 'generate_design' && parsed.prompt) {
         console.log('Design generation requested:', parsed.prompt);
         
-        const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        const imageResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+            'Authorization': `Bearer ${GEMINI_API_KEY}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash-image',
+            model: 'gemini-2.5-flash-image',
             messages: [{ role: 'user', content: parsed.prompt }],
             modalities: ['image', 'text']
           }),
@@ -565,7 +563,7 @@ Deno.serve(async (req) => {
           user_id: user.id,
           project_id: finalProjectId,
           conversation_id: conversationId,
-          model_used: 'google/gemini-2.5-flash-image',
+          model_used: 'gemini-2.5-flash-image',
           design_type: parsed.design_type || 'general',
           prompt: parsed.prompt,
           generation_time_ms: generationTime,

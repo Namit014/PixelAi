@@ -516,37 +516,36 @@ const PropertiesPanel = ({
         return;
       }
 
-      // Convert image to base64 (remove data URI prefix)
       const imageDataUrl = selectedObject.toDataURL({ format: "png", quality: 1 });
-      const base64Data = imageDataUrl.replace(/^data:image\/\w+;base64,/, "");
-
-      // Get image dimensions
       const width = Math.round(selectedObject.width * selectedObject.scaleX);
       const height = Math.round(selectedObject.height * selectedObject.scaleY);
 
-      console.log("Upscaling image:", { width, height });
+      console.log("Upscaling image locally:", { width, height });
 
-      // Call new gemini-upscale function
-      const { data, error } = await supabase.functions.invoke("gemini-upscale", {
-        body: {
-          image: base64Data,
-          mimeType: "image/png",
-          width,
-          height
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+      const LOCAL_SERVER = import.meta.env.VITE_LOCAL_SERVER_URL || "http://localhost:3001";
+      const response = await fetch(`${LOCAL_SERVER}/functions/v1/edit-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          imageUrl: imageDataUrl,
+          operation: "upscale",
+          originalWidth: width,
+          originalHeight: height
+        })
       });
 
-      if (error) throw error;
-      if (!data?.image) throw new Error("No image returned");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to upscale image");
+      }
+
+      const resData = await response.json();
+      if (!resData.imageUrl) throw new Error("No image returned from upscale");
 
       if (!canvas) throw new Error("Canvas not available");
 
-      // Convert base64 back to data URL for Fabric.js
-      const upscaledDataUrl = `data:image/png;base64,${data.image}`;
-      console.log("Loading upscaled image, data length:", data.image?.length);
+      const upscaledDataUrl = resData.imageUrl;
+      console.log("Loading upscaled image...");
 
       // Load upscaled image with error handling
       let img;
@@ -633,18 +632,24 @@ const PropertiesPanel = ({
 
       const imageDataUrl = selectedObject.toDataURL({ format: "png", quality: 1 });
 
-      const { data, error } = await supabase.functions.invoke("edit-image", {
-        body: {
+      const LOCAL_SERVER = import.meta.env.VITE_LOCAL_SERVER_URL || "http://localhost:3001";
+      const response = await fetch(`${LOCAL_SERVER}/functions/v1/edit-image`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           imageUrl: imageDataUrl,
-          operation: "expand"
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`
-        }
+          operation: "expand",
+          originalWidth: selectedObject.width,
+          originalHeight: selectedObject.height
+        })
       });
 
-      if (error) throw error;
-      if (!data?.imageUrl) throw new Error("No image returned");
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "Failed to expand image");
+      }
+
+      const data = await response.json();
 
       // Load expanded image and add as standalone image (not inside frame)
       const img = await FabricImage.fromURL(data.imageUrl);

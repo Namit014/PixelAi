@@ -118,54 +118,14 @@ const FloatingEditElementsPanel = ({
       // ========================================
       // STEP 1: AI CLEANUP on ORIGINAL image (with background)
       // ========================================
-      toast.loading('Step 1/4: Cleaning text from image...', { id: loadingToast });
-      
-      const originalBase64 = await imageElementToBase64(imgElement);
-      
-      if (!originalBase64) {
-        toast.error('Failed to convert image', { id: loadingToast });
-        hasProcessedRef.current = false;
-        onClose();
-        return;
-      }
-
-      let cleanedImageUrl: string | null = null;
-      
-      try {
-        const { data: cleanResult, error: cleanError } = await supabase.functions.invoke('clean-foreground', {
-          body: { imageUrl: originalBase64 }
-        });
-        
-        if (cleanError) {
-          console.warn('[ExtractSubject] AI cleanup failed:', cleanError);
-        } else if (cleanResult?.imageUrl && cleanResult?.cleaned) {
-          cleanedImageUrl = cleanResult.imageUrl;
-          console.log('[ExtractSubject] ✅ AI cleanup complete');
-        }
-      } catch (cleanupError) {
-        console.warn('[ExtractSubject] AI cleanup error:', cleanupError);
-      }
-
-      // ========================================
-      // STEP 2: RMBG on CLEANED image (or original if cleanup failed)
-      // ========================================
-      toast.loading('Step 2/4: Extracting subject...', { id: loadingToast });
+      toast.loading('Extracting subject with AI...', { id: loadingToast });
       
       let subjectBlob: Blob;
       
       try {
-        if (cleanedImageUrl) {
-          // Use AI-cleaned image for background removal
-          const cleanedImg = await loadImageFromUrl(cleanedImageUrl);
-          const result = await removeBackgroundWithMask(cleanedImg);
-          subjectBlob = result.blob;
-          console.log('[ExtractSubject] ✅ RMBG applied to cleaned image');
-        } else {
-          // Fallback: use original image
-          const result = await removeBackgroundWithMask(imgElement);
-          subjectBlob = result.blob;
-          console.log('[ExtractSubject] ⚠️ RMBG applied to original (cleanup failed)');
-        }
+        const result = await removeBackgroundWithMask(imgElement);
+        subjectBlob = result.blob;
+        console.log('[ExtractSubject] ✅ RMBG applied successfully');
       } catch (rmbgError) {
         console.error('[ExtractSubject] RMBG failed:', rmbgError);
         toast.error('Failed to extract subject', { id: loadingToast });

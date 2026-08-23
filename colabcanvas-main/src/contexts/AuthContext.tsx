@@ -87,16 +87,24 @@ function clearCache(key: string, tsKey: string) {
 }
 
 function getInitialAuthState() {
-  // BYPASS AUTH: Always return a dummy user and completed onboarding
-  const dummyUser = { id: 'local-dev-bypass', email: 'bypass@colab.com', app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: '' } as any;
-  const dummySession = { access_token: 'dummy-token', user: dummyUser };
+  const local = getLocalSession();
+  
+  if (local) {
+    return {
+      user: local.user,
+      session: local.session,
+      shouldShowAdminUI: getCachedStatus(ADMIN_STATUS_KEY, ADMIN_STATUS_TIMESTAMP_KEY) ?? false,
+      onboardingCompleted: getCachedStatus(ONBOARDING_STATUS_KEY, ONBOARDING_STATUS_TIMESTAMP_KEY) ?? false,
+      isLoading: false
+    };
+  }
   
   return { 
-    user: dummyUser, 
-    session: dummySession, 
-    shouldShowAdminUI: true, 
-    onboardingCompleted: true, 
-    isLoading: false 
+    user: null, 
+    session: null, 
+    shouldShowAdminUI: false, 
+    onboardingCompleted: false, 
+    isLoading: true 
   };
 }
 
@@ -110,8 +118,51 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(initial.isLoading);
 
   useEffect(() => {
-    // BYPASS AUTH: Do nothing, keep the dummy state.
-    return () => {};
+    const fetchUserStatus = async (currentUser: User) => {
+      try {
+        const [rolesRes, profileRes] = await Promise.all([
+          supabase.from('user_roles').select('role').eq('user_id', currentUser.id).maybeSingle(),
+          supabase.from('profiles').select('onboarding_completed').eq('id', currentUser.id).maybeSingle()
+        ]);
+        
+        const isAdmin = rolesRes.data?.role === 'admin';
+        const isOnboarded = profileRes.data?.onboarding_completed === true;
+
+        setShouldShowAdminUI(isAdmin);
+        setOnboardingCompleted(isOnboarded);
+        
+        setCachedStatus(ADMIN_STATUS_KEY, ADMIN_STATUS_TIMESTAMP_KEY, isAdmin);
+        setCachedStatus(ONBOARDING_STATUS_KEY, ONBOARDING_STATUS_TIMESTAMP_KEY, isOnboarded);
+      } catch (err) {
+        console.error('Error fetching user status:', err);
+      }
+    };
+
+    const handleSession = (sessionData: any | null) => {
+      setSession(sessionData);
+      setUser(sessionData?.user ?? null);
+      if (sessionData?.user) {
+        fetchUserStatus(sessionData.user).finally(() => setIsLoading(false));
+      } else {
+        setShouldShowAdminUI(false);
+        setOnboardingCompleted(false);
+        setIsLoading(false);
+      }
+    };
+
+    // Check active session
+    supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
+      handleSession(currentSession);
+    });
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, updatedSession) => {
+        handleSession(updatedSession);
+      }
+    );
+
+    return () => subscription.unsubscribe();
   }, []);
 
   if (isLoading) {

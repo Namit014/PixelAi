@@ -66,23 +66,4 @@ USING (
   )
 );
 
--- Fix 3: Add RLS policy on realtime.messages so only authenticated users can subscribe.
--- This blocks anonymous Realtime subscribers entirely. Postgres-changes broadcasts
--- still enforce per-row RLS on the source tables (e.g., referrals, referral_earnings),
--- and existing collaboration channels (canvas-*, webrtc-*, cursors-*) continue to work
--- for signed-in users.
-ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Authenticated users can subscribe to realtime" ON realtime.messages;
-CREATE POLICY "Authenticated users can subscribe to realtime"
-ON realtime.messages
-FOR SELECT
-TO authenticated
-USING (true);
-
-DROP POLICY IF EXISTS "Authenticated users can broadcast realtime" ON realtime.messages;
-CREATE POLICY "Authenticated users can broadcast realtime"
-ON realtime.messages
-FOR INSERT
-TO authenticated
-WITH CHECK (true);

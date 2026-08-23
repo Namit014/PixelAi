@@ -58,10 +58,13 @@ const Auth = () => {
 
   // Check session on mount
   useEffect(() => {
-    // BYPASS AUTH: Always redirect to dashboard
-    navigate('/dashboard', { replace: true });
+    const session = getStoredSession();
+    if (session) {
+      navigate('/dashboard', { replace: true });
+    } else {
+      setCheckingAuth(false);
+    }
   }, [navigate]);
-
 
   // Handle email submission — try quick lookup, fallback to manual choice
   const handleEmailSubmit = async (e: React.FormEvent) => {

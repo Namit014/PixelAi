@@ -46,10 +46,10 @@ Deno.serve(async (req) => {
     }
 
     const FIRECRAWL_API_KEY = Deno.env.get('FIRECRAWL_API_KEY');
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     console.log('Extracting brand from:', websiteUrl);
@@ -122,7 +122,7 @@ Deno.serve(async (req) => {
       // Enhance with AI if we have a screenshot
       if (screenshotBase64) {
         try {
-          const enhanced = await enhanceWithAI(LOVABLE_API_KEY, screenshotBase64, extractedData);
+          const enhanced = await enhanceWithAI(GEMINI_API_KEY, screenshotBase64, extractedData);
           if (enhanced) {
             extractedData.description = enhanced.description || extractedData.description;
             extractedData.industry = enhanced.industry || extractedData.industry;
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
       }
     } else if (screenshotBase64) {
       // No branding data, use AI vision on screenshot
-      const aiResult = await enhanceWithAI(LOVABLE_API_KEY, screenshotBase64, null);
+      const aiResult = await enhanceWithAI(GEMINI_API_KEY, screenshotBase64, null);
       if (!aiResult) throw new Error('No analysis generated');
       extractedData = aiResult;
     } else {
@@ -199,14 +199,14 @@ async function enhanceWithAI(
 4. TYPOGRAPHY: Font styles visible
 5. DESIGN STYLE: 3-5 style keywords`;
 
-  const visionResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const visionResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
+      model: 'gemini-2.5-flash',
       messages: [{
         role: 'user',
         content: [

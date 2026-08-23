@@ -48,8 +48,8 @@ Deno.serve(async (req: Request) => {
     if (!tp) return json({ error: "Project not found" }, 404);
     if (tp.user_id !== user.id) return json({ error: "Forbidden" }, 403);
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return json({ error: "LOVABLE_API_KEY not configured" }, 500);
+    const apiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!apiKey) return json({ error: "GEMINI_API_KEY not configured" }, 500);
 
     const userMsg = `BRIEF:\n${JSON.stringify(tp.brief ?? {})}
 
@@ -66,11 +66,11 @@ CLIENT NOTES: ${notes || "(none)"}
 
 Re-curate to land at-or-under the target budget. Total in pricing.total must be <= ${target} (within $5 tolerance).`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gemini-2.5-flash",
         messages: [
           { role: "system", content: SYSTEM },
           { role: "user", content: userMsg },

@@ -70,7 +70,7 @@ const TEMPLATE_CONFIGS: Record<string, {
           nodeType: "imageGenerator",
           label: "Image Generator",
           config: {
-            model: "google/gemini-2.5-flash-image",
+            model: "gemini-2.5-flash-image",
             designType: "illustration"
           }
         }
@@ -203,7 +203,7 @@ const TEMPLATE_CONFIGS: Record<string, {
           nodeType: "imageGenerator",
           label: "Variation 1",
           config: {
-            model: "google/gemini-2.5-flash-image",
+            model: "gemini-2.5-flash-image",
             prompt: "Create a variation with warm tones"
           }
         }
@@ -216,7 +216,7 @@ const TEMPLATE_CONFIGS: Record<string, {
           nodeType: "imageGenerator",
           label: "Variation 2",
           config: {
-            model: "google/gemini-2.5-flash-image",
+            model: "gemini-2.5-flash-image",
             prompt: "Create a variation with cool tones"
           }
         }
@@ -229,7 +229,7 @@ const TEMPLATE_CONFIGS: Record<string, {
           nodeType: "imageGenerator",
           label: "Variation 3",
           config: {
-            model: "google/gemini-2.5-flash-image",
+            model: "gemini-2.5-flash-image",
             prompt: "Create a minimalist variation"
           }
         }

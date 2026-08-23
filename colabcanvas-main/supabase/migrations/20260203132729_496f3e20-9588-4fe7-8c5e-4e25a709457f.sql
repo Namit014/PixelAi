@@ -212,21 +212,3 @@ DROP POLICY IF EXISTS "Users can only view their own pinterest tokens" ON public
 CREATE POLICY "Users can only view their own pinterest tokens"
 ON public.pinterest_tokens FOR SELECT
 USING (auth.uid() = user_id);
-
--- 19. NOTIFICATIONS TABLE - Owner only
-DROP POLICY IF EXISTS "Anyone can view notifications" ON public.notifications;
-DROP POLICY IF EXISTS "Public can view notifications" ON public.notifications;
-DROP POLICY IF EXISTS "Users can view their own notifications" ON public.notifications;
-
-CREATE POLICY "Users can view their own notifications"
-ON public.notifications FOR SELECT
-USING (auth.uid() = user_id);
-
--- 20. RUMI_CREATIVE_SESSIONS TABLE - Owner only
-DROP POLICY IF EXISTS "Anyone can view rumi creative sessions" ON public.rumi_creative_sessions;
-DROP POLICY IF EXISTS "Public can view rumi creative sessions" ON public.rumi_creative_sessions;
-DROP POLICY IF EXISTS "Users can view their own rumi creative sessions" ON public.rumi_creative_sessions;
-
-CREATE POLICY "Users can view their own rumi creative sessions"
-ON public.rumi_creative_sessions FOR SELECT
-USING (auth.uid() = user_id);

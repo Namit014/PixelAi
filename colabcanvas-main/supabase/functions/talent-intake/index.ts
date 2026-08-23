@@ -24,18 +24,18 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   try {
     const { messages, brief, attachments } = await req.json();
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) throw new Error("LOVABLE_API_KEY not configured");
+    const apiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
 
     const attachmentSummary = (attachments ?? []).length
       ? `\n\nAttached references:\n${attachments.map((a: any) => `- ${a.type}: ${a.name}${a.source_project_title ? ` (from project: ${a.source_project_title})` : ''}`).join('\n')}`
       : '';
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "gemini-2.5-flash",
         messages: [
           { role: "system", content: SYSTEM },
           { role: "user", content: `Brief context so far:\n${JSON.stringify(brief ?? {})}${attachmentSummary}\n\nConversation:\n${(messages ?? []).map((m: any) => `${m.role}: ${m.content}`).join("\n")}` },

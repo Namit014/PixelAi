@@ -56,7 +56,7 @@ const CommentsPanel = ({ workflowId, isOpen, onClose }: CommentsPanelProps) => {
 
     // Subscribe to realtime updates for comments
     const commentsChannel = supabase
-      .channel('workflow-comments')
+      .channel(`workflow-panel-comments-${workflowId}`)
       .on(
         'postgres_changes',
         {
@@ -73,7 +73,7 @@ const CommentsPanel = ({ workflowId, isOpen, onClose }: CommentsPanelProps) => {
 
     // Subscribe to realtime updates for replies
     const repliesChannel = supabase
-      .channel('workflow-comment-replies')
+      .channel(`workflow-panel-replies-${workflowId}`)
       .on(
         'postgres_changes',
         {

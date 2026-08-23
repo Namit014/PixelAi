@@ -158,18 +158,18 @@ Deno.serve(async (req: Request) => {
     });
     if (!ok) return json({ error: "Forbidden" }, 403);
 
-    const apiKey = Deno.env.get("LOVABLE_API_KEY");
-    if (!apiKey) return json({ error: "LOVABLE_API_KEY not configured" }, 500);
+    const apiKey = Deno.env.get("GEMINI_API_KEY");
+    if (!apiKey) return json({ error: "GEMINI_API_KEY not configured" }, 500);
 
     // 1. Summarise transcript via tool-call.
     const SYSTEM = `You are an AI notetaker. Given a meeting transcript, produce a tight summary,
 clear action items (with owner if mentioned), decisions made, and risks flagged. Be concrete; avoid filler.`;
 
-    const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const resp = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gemini-2.5-flash",
         messages: [
           { role: "system", content: SYSTEM },
           {

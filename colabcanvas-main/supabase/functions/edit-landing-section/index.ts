@@ -3,7 +3,7 @@ import { corsHeaders } from '../_shared/cors.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')!;
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY')!;
 
 /** Set a value at a dot/bracket path inside an object, e.g. "features[2].title" */
 function setAtPath(obj: any, path: string, value: any) {
@@ -62,11 +62,11 @@ Deno.serve(async (req) => {
       if (!pres) return new Response(JSON.stringify({ error: 'Presentation not found' }), { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
       const slides = pres.slides as any[];
       const currentSlide = slides[sectionIndex];
-      const editResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      const editResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${GEMINI_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'gemini-2.5-flash',
           messages: [
             { role: 'system', content: 'You edit a slide. Return ONLY valid JSON matching the slide structure.' },
             { role: 'user', content: `Current:\n${JSON.stringify(currentSlide)}\nInstruction: "${instruction}"` },
@@ -120,11 +120,11 @@ Deno.serve(async (req) => {
       // If no manual text but instruction provided → ask AI to rewrite just that field
       if ((newValue == null || newValue === '') && instruction) {
         const currentValue = getAtPath(currentSection, fieldPath);
-        const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        const aiResp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+          headers: { 'Authorization': `Bearer ${GEMINI_API_KEY}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'google/gemini-2.5-flash',
+            model: 'gemini-2.5-flash',
             messages: [
               { role: 'system', content: 'You are a premium landing-page copywriter. Rewrite ONE text field per the instruction. Return ONLY the new text — no quotes, no JSON, no commentary.' },
               { role: 'user', content: `Current text:\n"""${currentValue ?? ''}"""\n\nInstruction: ${instruction}\n\nReturn only the rewritten text.` },
@@ -147,11 +147,11 @@ Deno.serve(async (req) => {
       setAtPath(updatedSection, fieldPath, newValue);
     } else {
       // ─── FULL SECTION REWRITE ─────────────────────────────────────
-      const aiResp = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      const aiResp = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${LOVABLE_API_KEY}`, 'Content-Type': 'application/json' },
+        headers: { 'Authorization': `Bearer ${GEMINI_API_KEY}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'gemini-2.5-flash',
           messages: [
             { role: 'system', content: 'You are a premium landing-page editor. Update the section JSON per the instruction. Preserve structure and the type/layoutVariant fields. Return ONLY valid JSON.' },
             { role: 'user', content: `Current:\n${JSON.stringify(currentSection, null, 2)}\n\nInstruction: "${instruction}"` },

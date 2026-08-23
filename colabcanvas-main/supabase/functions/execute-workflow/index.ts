@@ -97,21 +97,21 @@ async function executeNode(
       console.log(`📝 Combined text for enhancement (${combinedText.length} chars):`, combinedText.substring(0, 200));
 
       // Call Lovable AI for enhancement
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        console.error(`❌ LOVABLE_API_KEY not configured`);
-        throw new Error('LOVABLE_API_KEY not configured');
+      const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+      if (!GEMINI_API_KEY) {
+        console.error(`❌ GEMINI_API_KEY not configured`);
+        throw new Error('GEMINI_API_KEY not configured');
       }
 
       console.log(`🔑 Calling Lovable AI...`);
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Authorization': `Bearer ${GEMINI_API_KEY}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'gemini-2.5-flash',
           messages: [
             {
               role: 'system',
@@ -168,7 +168,7 @@ async function executeNode(
       const { data, error } = await supabase.functions.invoke('generate-design', {
         body: {
           prompt: finalPrompt.trim(),
-          model: node.data.config.model || 'google/gemini-2.5-flash-image',
+          model: node.data.config.model || 'gemini-2.5-flash-image',
           design_type: node.data.config.designType || 'design',
           referenceImageUrl: referenceImageUrl, // undefined if not present
           conversationId: null,

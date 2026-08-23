@@ -27,9 +27,9 @@ async function callTextAgent(
   systemPrompt: string,
   userPrompt: string,
   apiKey: string,
-  model = 'google/gemini-2.5-flash'
+  model = 'gemini-2.5-flash'
 ): Promise<string> {
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -70,7 +70,7 @@ async function callImageAgent(
     });
   }
 
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
@@ -104,14 +104,14 @@ async function callVisionAgent(
   imageUrl: string,
   apiKey: string
 ): Promise<string> {
-  const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+  const response = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'google/gemini-2.5-flash',
+      model: 'gemini-2.5-flash',
       messages: [
         { role: 'system', content: systemPrompt },
         {
@@ -166,8 +166,8 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-  if (!LOVABLE_API_KEY) {
+  const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+  if (!GEMINI_API_KEY) {
     return new Response(JSON.stringify({ error: 'API key not configured' }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -219,7 +219,7 @@ Deno.serve(async (req) => {
             const result = await Promise.race([
               runPipeline(
                 prompt, designType, referenceImageUrl, brandSystem,
-                userId, supabase, LOVABLE_API_KEY, send
+                userId, supabase, GEMINI_API_KEY, send
               ),
               new Promise((_, reject) => setTimeout(() => reject(new Error('Pipeline timeout — exceeded 50s limit')), 50000))
             ]);
@@ -243,7 +243,7 @@ Deno.serve(async (req) => {
     const result = await Promise.race([
       runPipeline(
         prompt, designType, referenceImageUrl, brandSystem,
-        userId, supabase, LOVABLE_API_KEY
+        userId, supabase, GEMINI_API_KEY
       ),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Pipeline timeout — exceeded 50s limit')), 50000))
     ]);

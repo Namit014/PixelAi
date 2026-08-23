@@ -25,9 +25,9 @@ Deno.serve(async (req) => {
     
     console.log('📸 Analyzing reference image:', image_url.substring(0, 80) + '...');
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY not configured");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY not configured");
     }
 
     // Use Lovable AI's vision model to deeply analyze the reference - EXTRACT EXACT SPECIFICATIONS
@@ -75,14 +75,14 @@ CRITICAL: Output these as DIRECT REPLICATION INSTRUCTIONS.
 Do NOT describe what the image shows - only extract STYLE ATTRIBUTES that force the AI to create visually matching (not copied) designs.
 The AI reading this must be able to create a NEW design that looks like it's from the SAME DESIGN SYSTEM.`;
 
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro', // Use Pro for detailed vision analysis
+        model: 'gemini-2.5-flash', // Use Pro for detailed vision analysis
         messages: [{
           role: 'user',
           content: [

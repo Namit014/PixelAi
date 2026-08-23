@@ -44,8 +44,8 @@ Deno.serve(async (req) => {
 
     console.log('🔍 Analyzing product image:', imageUrl.substring(0, 80));
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY not configured');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY not configured');
 
     // Build the analysis prompt
     const analysisPrompt = `You are an expert visual analyst and creative director. Analyze this image in detail. It could be anything: a product photo, illustration, UI mockup, logo, character design, landscape, screenshot, or any other visual.
@@ -81,14 +81,14 @@ Be extremely specific. If something is not visible, say "Not visible" rather tha
 Respond with ONLY the JSON, no markdown fencing.`;
 
     // Use Lovable AI Gateway with vision via Gemini 2.5 Pro
-    const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const aiResponse = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Authorization': `Bearer ${GEMINI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
+        model: 'gemini-2.5-flash',
         messages: [
           {
             role: 'user',

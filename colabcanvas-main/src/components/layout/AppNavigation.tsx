@@ -16,7 +16,7 @@ const navItems = [
 { name: 'Cosmo', icon: CosmoIcon, path: '/cosmo' },
 { name: 'Covex', icon: CovexIcon, path: '/covex' },
 { name: 'Cogent', icon: ThinkIcon, path: '/cogent' },
-{ name: 'Companion', icon: TalentIcon, path: '/talent' }];
+{ name: 'TrueVision', icon: TalentIcon, path: '/truevision' }];
 
 
 const buttonVariants = {
